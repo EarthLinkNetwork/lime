@@ -1,0 +1,31 @@
+{
+  "name": "@earthlinknetwork/lime",
+  "version": "1.0.0",
+  "description": "Universal S3 file upload utility with image processing",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "prepare": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EarthLinkNetwork/lime.git"
+  },
+  "keywords": [
+    "s3",
+    "upload",
+    "aws",
+    "cdk",
+    "react"
+  ],
+  "author": "EarthLinkNetwork",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
