@@ -36,6 +36,11 @@ npm install git+ssh://git@github.com:EarthLinkNetwork/lime.git
 ```bash
 cd node_modules/@earthlinknetwork/lime/packages/backend
 export AWS_PROFILE=your-profile
+
+# Generate and set API key
+export VALID_API_KEYS=$(openssl rand -hex 32)
+echo "Your API Key: $VALID_API_KEYS"  # Save this!
+
 npm run deploy
 ```
 
