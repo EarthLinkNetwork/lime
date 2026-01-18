@@ -107,6 +107,89 @@ describe('S3Uploader', () => {
     });
   });
 
+  it('cloudfrontDomain指定時はCloudFront URLを返すこと', async () => {
+    const mockOnUploadComplete = vi.fn();
+
+    // Mock presigned URL response
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          uploadUrl: 'https://s3.example.com/upload',
+          key: 'uploads/test-uuid.jpg',
+          fileUrl: 'https://bucket.s3.amazonaws.com/uploads/test-uuid.jpg',
+        }),
+    });
+
+    // Mock S3 PUT response
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+    });
+
+    render(
+      <S3Uploader
+        {...defaultProps}
+        cloudfrontDomain="d1xxx.cloudfront.net"
+        onUploadComplete={mockOnUploadComplete}
+      />
+    );
+
+    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+    const fileInput = screen.getByLabelText(/select|choose|ファイル/i);
+
+    await userEvent.upload(fileInput, file);
+
+    const uploadButton = screen.getByRole('button', { name: /upload|アップロード/i });
+    await userEvent.click(uploadButton);
+
+    await waitFor(() => {
+      expect(mockOnUploadComplete).toHaveBeenCalledWith(
+        'https://d1xxx.cloudfront.net/uploads/test-uuid.jpg'
+      );
+    });
+  });
+
+  it('cloudfrontDomain未指定時はS3 URLを返すこと', async () => {
+    const mockOnUploadComplete = vi.fn();
+
+    // Mock presigned URL response
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          uploadUrl: 'https://s3.example.com/upload',
+          key: 'uploads/test-uuid.jpg',
+          fileUrl: 'https://bucket.s3.amazonaws.com/uploads/test-uuid.jpg',
+        }),
+    });
+
+    // Mock S3 PUT response
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+    });
+
+    render(
+      <S3Uploader
+        {...defaultProps}
+        onUploadComplete={mockOnUploadComplete}
+      />
+    );
+
+    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+    const fileInput = screen.getByLabelText(/select|choose|ファイル/i);
+
+    await userEvent.upload(fileInput, file);
+
+    const uploadButton = screen.getByRole('button', { name: /upload|アップロード/i });
+    await userEvent.click(uploadButton);
+
+    await waitFor(() => {
+      expect(mockOnUploadComplete).toHaveBeenCalledWith(
+        'https://bucket.s3.amazonaws.com/uploads/test-uuid.jpg'
+      );
+    });
+  });
+
   it('プログレスバーが表示されること', async () => {
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,

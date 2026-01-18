@@ -8,6 +8,7 @@ type UploadStatus = 'idle' | 'compressing' | 'cropping' | 'uploading' | 'success
 export function S3Uploader({
   apiEndpoint,
   apiKey,
+  cloudfrontDomain,
   onUploadComplete,
   onUploadError,
   onProgress,
@@ -120,7 +121,7 @@ export function S3Uploader({
       onProgress?.(30);
 
       // Get presigned URL
-      const { uploadUrl, fileUrl } = await getPresignedUrl(
+      const { uploadUrl, fileUrl, key } = await getPresignedUrl(
         fileToUpload.name,
         fileToUpload.type
       );
@@ -135,7 +136,11 @@ export function S3Uploader({
       onProgress?.(100);
       setStatus('success');
 
-      onUploadComplete?.(fileUrl);
+      // Return CloudFront URL if domain is provided, otherwise S3 URL
+      const finalUrl = cloudfrontDomain
+        ? `https://${cloudfrontDomain.replace(/^https?:\/\//, '')}/${key}`
+        : fileUrl;
+      onUploadComplete?.(finalUrl);
     } catch (error) {
       setStatus('error');
       const errorObj = error instanceof Error ? error : new Error('Unknown error');
@@ -148,6 +153,7 @@ export function S3Uploader({
     compressionOptions,
     apiEndpoint,
     apiKey,
+    cloudfrontDomain,
     onUploadComplete,
     onUploadError,
     onProgress,

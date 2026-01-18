@@ -59,6 +59,7 @@ function MyUploadPage() {
     <S3Uploader
       apiEndpoint="https://xxx.execute-api.region.amazonaws.com"
       apiKey="your-api-key"
+      cloudfrontDomain="d1xxx.cloudfront.net"  // Returns CloudFront URL
       onUploadComplete={(url) => console.log('Uploaded:', url)}
       onUploadError={(error) => console.error('Failed:', error)}
       enableCompression={true}
@@ -135,6 +136,7 @@ lime/
 |------|------|----------|-------------|
 | `apiEndpoint` | `string` | Yes | API Gateway endpoint |
 | `apiKey` | `string` | Yes | API key for authentication |
+| `cloudfrontDomain` | `string` | No | CloudFront domain (returns CF URL if set) |
 | `onUploadComplete` | `(url: string) => void` | No | Success callback |
 | `onUploadError` | `(error: Error) => void` | No | Error callback |
 | `onProgress` | `(progress: number) => void` | No | Progress callback (0-100) |

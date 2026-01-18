@@ -132,6 +132,7 @@ function ImageCropper({
 function S3Uploader({
   apiEndpoint,
   apiKey,
+  cloudfrontDomain,
   onUploadComplete,
   onUploadError,
   onProgress,
@@ -220,7 +221,7 @@ function S3Uploader({
       setStatus("uploading");
       setProgress(30);
       onProgress?.(30);
-      const { uploadUrl, fileUrl } = await getPresignedUrl(
+      const { uploadUrl, fileUrl, key } = await getPresignedUrl(
         fileToUpload.name,
         fileToUpload.type
       );
@@ -230,7 +231,8 @@ function S3Uploader({
       setProgress(100);
       onProgress?.(100);
       setStatus("success");
-      onUploadComplete?.(fileUrl);
+      const finalUrl = cloudfrontDomain ? `https://${cloudfrontDomain.replace(/^https?:\/\//, "")}/${key}` : fileUrl;
+      onUploadComplete?.(finalUrl);
     } catch (error) {
       setStatus("error");
       const errorObj = error instanceof Error ? error : new Error("Unknown error");
@@ -243,6 +245,7 @@ function S3Uploader({
     compressionOptions,
     apiEndpoint,
     apiKey,
+    cloudfrontDomain,
     onUploadComplete,
     onUploadError,
     onProgress

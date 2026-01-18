@@ -3,6 +3,8 @@ import * as react_jsx_runtime from 'react/jsx-runtime';
 interface S3UploaderProps {
     apiEndpoint: string;
     apiKey: string;
+    /** CloudFront domain for image delivery (e.g., "d1xxx.cloudfront.net"). If provided, onUploadComplete returns CloudFront URL instead of S3 URL. */
+    cloudfrontDomain?: string;
     onUploadComplete?: (url: string) => void;
     onUploadError?: (error: Error) => void;
     onProgress?: (progress: number) => void;
@@ -24,7 +26,7 @@ interface CompressionOptions$1 {
     useWebWorker?: boolean;
 }
 
-declare function S3Uploader({ apiEndpoint, apiKey, onUploadComplete, onUploadError, onProgress, maxFileSizeMB, allowedFileTypes, enableCrop, enableCompression, compressionOptions, }: S3UploaderProps): react_jsx_runtime.JSX.Element;
+declare function S3Uploader({ apiEndpoint, apiKey, cloudfrontDomain, onUploadComplete, onUploadError, onProgress, maxFileSizeMB, allowedFileTypes, enableCrop, enableCompression, compressionOptions, }: S3UploaderProps): react_jsx_runtime.JSX.Element;
 
 interface ImageCropperProps {
     src: string;
