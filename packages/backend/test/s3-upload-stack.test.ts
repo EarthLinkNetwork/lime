@@ -110,4 +110,78 @@ describe('S3UploadStack', () => {
       });
     });
   });
+
+  describe('v2: Delete Object Lambda', () => {
+    test('削除用Lambdaが作成されること', () => {
+      // Should have at least 3 Lambda functions (presigned-url, image-resize, delete-object, list-objects)
+      const lambdas = template.findResources('AWS::Lambda::Function');
+      expect(Object.keys(lambdas).length).toBeGreaterThanOrEqual(4);
+    });
+
+    test('DELETE /objects ルートが存在すること', () => {
+      template.hasResourceProperties('AWS::ApiGatewayV2::Route', {
+        RouteKey: 'DELETE /objects',
+      });
+    });
+
+    test('削除LambdaがS3のDeleteObject権限を持つこと', () => {
+      template.hasResourceProperties('AWS::IAM::Policy', {
+        PolicyDocument: {
+          Statement: Match.arrayWith([
+            Match.objectLike({
+              Action: 's3:DeleteObject*',
+              Effect: 'Allow',
+            }),
+          ]),
+        },
+      });
+    });
+  });
+
+  describe('v2: List Objects Lambda', () => {
+    test('GET /objects ルートが存在すること', () => {
+      template.hasResourceProperties('AWS::ApiGatewayV2::Route', {
+        RouteKey: 'GET /objects',
+      });
+    });
+
+    test('一覧取得LambdaがS3のListBucket権限を持つこと', () => {
+      template.hasResourceProperties('AWS::IAM::Policy', {
+        PolicyDocument: {
+          Statement: Match.arrayWith([
+            Match.objectLike({
+              Action: Match.arrayWith(['s3:GetObject*', 's3:GetBucket*', 's3:List*']),
+              Effect: 'Allow',
+            }),
+          ]),
+        },
+      });
+    });
+  });
+
+  describe('v2: S3 Lifecycle Rules', () => {
+    test('_tmp/ プレフィックスに1日のライフサイクルルールが設定されていること', () => {
+      template.hasResourceProperties('AWS::S3::Bucket', {
+        LifecycleConfiguration: {
+          Rules: Match.arrayWith([
+            Match.objectLike({
+              Prefix: '_tmp/',
+              ExpirationInDays: 1,
+              Status: 'Enabled',
+            }),
+          ]),
+        },
+      });
+    });
+  });
+
+  describe('v2: CORS Update', () => {
+    test('HTTP APIのCORSにDELETEとGETが含まれること', () => {
+      template.hasResourceProperties('AWS::ApiGatewayV2::Api', {
+        CorsConfiguration: {
+          AllowMethods: Match.arrayWith(['DELETE', 'GET', 'POST', 'OPTIONS']),
+        },
+      });
+    });
+  });
 });

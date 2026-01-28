@@ -22,12 +22,16 @@ import {
   S3Uploader,
   ImageCropper,
   compressImage,
+  deleteObject,
+  listObjects,
 } from '@s3-upload-utility/frontend';
 
 // 型定義もエクスポートされています
 import type {
   S3UploaderProps,
   CompressionOptions,
+  ListObjectsResponse,
+  ObjectInfo,
 } from '@s3-upload-utility/frontend';
 
 /**
@@ -45,6 +49,14 @@ export function BasicUploadExample() {
         apiEndpoint="https://your-api-id.execute-api.ap-northeast-1.amazonaws.com"
         // 必須: API Key
         apiKey="your-api-key"
+        // 必須: プロジェクト識別子
+        projectCode="my-app"
+        // 必須: データ分離キー（userId, teamId, tenantId等）
+        ownerKey="user-123"
+        // オプション: 論理フォルダ（デフォルト: 'uploads'）
+        folder="avatars"
+        // オプション: S3 Object Tags
+        tags={{ category: 'profile', status: 'active' }}
         // オプション: アップロード完了時のコールバック
         onUploadComplete={(url) => {
           console.log('Uploaded:', url);
@@ -68,6 +80,8 @@ export function BasicUploadExample() {
         }}
         // オプション: クロップを有効化（デフォルト: false）
         enableCrop={false}
+        // オプション: Drag & Drop（デフォルト: true）
+        enableDragDrop={true}
         // オプション: 最大ファイルサイズ (MB)
         maxFileSizeMB={10}
         // オプション: 許可するファイルタイプ
@@ -275,6 +289,62 @@ export function CloudFrontImageExample() {
 }
 
 /**
+ * v2: ファイル一覧と削除の例
+ */
+export function FileManagementExample() {
+  const [objects, setObjects] = useState<ObjectInfo[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+
+  const API_ENDPOINT = 'https://your-api-id.execute-api.ap-northeast-1.amazonaws.com';
+  const API_KEY = 'your-api-key';
+
+  const loadObjects = async (cursor?: string) => {
+    const result = await listObjects({
+      apiEndpoint: API_ENDPOINT,
+      apiKey: API_KEY,
+      projectCode: 'my-app',
+      ownerKey: 'user-123',
+      folder: 'avatars',
+      limit: 20,
+      cursor: cursor || undefined,
+      includeTags: true,
+    });
+    setObjects(cursor ? [...objects, ...result.objects] : result.objects);
+    setNextCursor(result.nextCursor);
+  };
+
+  const handleDelete = async (key: string) => {
+    await deleteObject({
+      apiEndpoint: API_ENDPOINT,
+      apiKey: API_KEY,
+      key,
+    });
+    setObjects(objects.filter((o) => o.key !== key));
+  };
+
+  return (
+    <div>
+      <h2>File Management</h2>
+      <button onClick={() => loadObjects()}>Load Files</button>
+
+      <ul>
+        {objects.map((obj) => (
+          <li key={obj.key}>
+            {obj.key} ({obj.size} bytes)
+            {obj.tags && <span> tags: {JSON.stringify(obj.tags)}</span>}
+            <button onClick={() => handleDelete(obj.key)}>Delete</button>
+          </li>
+        ))}
+      </ul>
+
+      {nextCursor && (
+        <button onClick={() => loadObjects(nextCursor)}>Load More</button>
+      )}
+    </div>
+  );
+}
+
+/**
  * メインAppコンポーネント
  */
 export default function App() {
@@ -296,6 +366,9 @@ export default function App() {
 
       <hr />
       <CloudFrontImageExample />
+
+      <hr />
+      <FileManagementExample />
     </div>
   );
 }

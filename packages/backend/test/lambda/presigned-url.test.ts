@@ -60,6 +60,8 @@ describe('Presigned URL Lambda', () => {
     body: JSON.stringify({
       fileName: 'test.jpg',
       contentType: 'image/jpeg',
+      projectCode: 'berry',
+      ownerKey: 'user-123',
     }),
     isBase64Encoded: false,
     ...overrides,
@@ -130,7 +132,7 @@ describe('Presigned URL Lambda', () => {
       expect(PutObjectCommand).toHaveBeenCalledWith(
         expect.objectContaining({
           Bucket: 'test-bucket',
-          Key: expect.stringContaining('uploads/'),
+          Key: 'berry/user-123/uploads/test-uuid-1234.jpg',
           ContentType: 'image/jpeg',
         })
       );
@@ -157,6 +159,8 @@ describe('Presigned URL Lambda', () => {
         body: JSON.stringify({
           fileName: 'test.jpg',
           contentType: 'image/jpeg',
+          projectCode: 'berry',
+          ownerKey: 'user-123',
           folder: 'custom-folder',
         }),
       });
@@ -165,7 +169,7 @@ describe('Presigned URL Lambda', () => {
 
       expect(PutObjectCommand).toHaveBeenCalledWith(
         expect.objectContaining({
-          Key: expect.stringContaining('custom-folder/'),
+          Key: 'berry/user-123/custom-folder/test-uuid-1234.jpg',
         })
       );
     });
@@ -198,12 +202,125 @@ describe('Presigned URL Lambda', () => {
 
     it('contentTypeがない場合、400を返すこと', async () => {
       const event = createEvent({
-        body: JSON.stringify({ fileName: 'test.jpg' }),
+        body: JSON.stringify({ fileName: 'test.jpg', projectCode: 'berry', ownerKey: 'user-123' }),
       });
 
       const result = await handler(event) as APIGatewayProxyStructuredResultV2;
 
       expect(result.statusCode).toBe(400);
+    });
+
+    it('projectCodeがない場合、400を返すこと', async () => {
+      const event = createEvent({
+        body: JSON.stringify({
+          fileName: 'test.jpg',
+          contentType: 'image/jpeg',
+          ownerKey: 'user-123',
+        }),
+      });
+
+      const result = await handler(event) as APIGatewayProxyStructuredResultV2;
+
+      expect(result.statusCode).toBe(400);
+      expect(JSON.parse(result.body as string)).toEqual({
+        error: 'projectCode and ownerKey are required',
+      });
+    });
+
+    it('ownerKeyがない場合、400を返すこと', async () => {
+      const event = createEvent({
+        body: JSON.stringify({
+          fileName: 'test.jpg',
+          contentType: 'image/jpeg',
+          projectCode: 'berry',
+        }),
+      });
+
+      const result = await handler(event) as APIGatewayProxyStructuredResultV2;
+
+      expect(result.statusCode).toBe(400);
+      expect(JSON.parse(result.body as string)).toEqual({
+        error: 'projectCode and ownerKey are required',
+      });
+    });
+  });
+
+  describe('v2: Key structure with projectCode/ownerKey', () => {
+    it('キーが {projectCode}/{ownerKey}/{folder}/{UUID}.{ext} 形式で生成されること', async () => {
+      const event = createEvent();
+
+      const result = await handler(event) as APIGatewayProxyStructuredResultV2;
+
+      expect(result.statusCode).toBe(200);
+      const body = JSON.parse(result.body as string);
+      expect(body.key).toBe('berry/user-123/uploads/test-uuid-1234.jpg');
+    });
+
+    it('folder未指定時はデフォルト uploads が使われること', async () => {
+      const event = createEvent({
+        body: JSON.stringify({
+          fileName: 'test.jpg',
+          contentType: 'image/jpeg',
+          projectCode: 'sakura',
+          ownerKey: 'team-abc',
+        }),
+      });
+
+      const result = await handler(event) as APIGatewayProxyStructuredResultV2;
+
+      const body = JSON.parse(result.body as string);
+      expect(body.key).toBe('sakura/team-abc/uploads/test-uuid-1234.jpg');
+    });
+  });
+
+  describe('v2: S3 Object Tagging', () => {
+    it('tags未指定でもアップロードが成功すること', async () => {
+      const event = createEvent();
+
+      const result = await handler(event) as APIGatewayProxyStructuredResultV2;
+
+      expect(result.statusCode).toBe(200);
+    });
+
+    it('tags指定時にPutObjectCommandのTaggingパラメータにタグが含まれること', async () => {
+      const { PutObjectCommand } = require('@aws-sdk/client-s3');
+      const event = createEvent({
+        body: JSON.stringify({
+          fileName: 'test.jpg',
+          contentType: 'image/jpeg',
+          projectCode: 'berry',
+          ownerKey: 'user-123',
+          tags: { category: 'avatar', status: 'active' },
+        }),
+      });
+
+      await handler(event);
+
+      expect(PutObjectCommand).toHaveBeenCalledWith(
+        expect.objectContaining({
+          Tagging: 'category=avatar&status=active',
+        })
+      );
+    });
+
+    it('複数タグが正しくエンコードされること', async () => {
+      const { PutObjectCommand } = require('@aws-sdk/client-s3');
+      const event = createEvent({
+        body: JSON.stringify({
+          fileName: 'test.jpg',
+          contentType: 'image/jpeg',
+          projectCode: 'berry',
+          ownerKey: 'user-123',
+          tags: { a: '1', b: '2', c: '3' },
+        }),
+      });
+
+      await handler(event);
+
+      const call = PutObjectCommand.mock.calls[0][0];
+      expect(call.Tagging).toContain('a=1');
+      expect(call.Tagging).toContain('b=2');
+      expect(call.Tagging).toContain('c=3');
     });
   });
 });

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, PutObjectCommandInput } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { randomUUID } from 'crypto';
@@ -10,7 +10,10 @@ const VALID_API_KEYS = (process.env.VALID_API_KEYS || '').split(',').filter(Bool
 interface RequestBody {
   fileName: string;
   contentType: string;
+  projectCode: string;
+  ownerKey: string;
   folder?: string;
+  tags?: Record<string, string>;
 }
 
 export const handler = async (
@@ -44,7 +47,7 @@ export const handler = async (
     }
 
     const body: RequestBody = JSON.parse(event.body);
-    const { fileName, contentType, folder = 'uploads' } = body;
+    const { fileName, contentType, projectCode, ownerKey, folder = 'uploads', tags } = body;
 
     if (!fileName || !contentType) {
       return {
@@ -53,16 +56,33 @@ export const handler = async (
       };
     }
 
-    // Generate unique key
-    const extension = fileName.split('.').pop();
-    const key = `${folder}/${randomUUID()}.${extension}`;
+    if (!projectCode || !ownerKey) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'projectCode and ownerKey are required' }),
+      };
+    }
 
-    // Generate presigned URL
-    const command = new PutObjectCommand({
+    // Generate unique key: {projectCode}/{ownerKey}/{folder}/{UUID}.{ext}
+    const extension = fileName.split('.').pop();
+    const key = `${projectCode}/${ownerKey}/${folder}/${randomUUID()}.${extension}`;
+
+    // Build PutObjectCommand params
+    const commandParams: PutObjectCommandInput = {
       Bucket: BUCKET_NAME,
       Key: key,
       ContentType: contentType,
-    });
+    };
+
+    // Add S3 Object Tagging if tags are provided
+    if (tags && Object.keys(tags).length > 0) {
+      commandParams.Tagging = Object.entries(tags)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join('&');
+    }
+
+    // Generate presigned URL
+    const command = new PutObjectCommand(commandParams);
 
     const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
 

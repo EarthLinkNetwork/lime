@@ -8,6 +8,10 @@ type UploadStatus = 'idle' | 'compressing' | 'cropping' | 'uploading' | 'success
 export function S3Uploader({
   apiEndpoint,
   apiKey,
+  projectCode,
+  ownerKey,
+  folder,
+  tags,
   cloudfrontDomain,
   onUploadComplete,
   onUploadError,
@@ -17,6 +21,7 @@ export function S3Uploader({
   enableCrop = false,
   enableCompression = true,
   compressionOptions = { maxSizeMB: 2, maxWidthOrHeight: 1920 },
+  enableDragDrop = true,
 }: S3UploaderProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -24,13 +29,11 @@ export function S3Uploader({
   const [progress, setProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-
+  const processFile = useCallback(
+    (file: File) => {
       // Validate file type
       if (!allowedFileTypes.includes(file.type)) {
         setErrorMessage(`Invalid file type. Allowed: ${allowedFileTypes.join(', ')}`);
@@ -58,6 +61,40 @@ export function S3Uploader({
     [allowedFileTypes, maxFileSizeMB, enableCrop]
   );
 
+  const handleFileSelect = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      processFile(file);
+    },
+    [processFile]
+  );
+
+  const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsDragOver(false);
+
+      const file = event.dataTransfer.files?.[0];
+      if (!file) return;
+      processFile(file);
+    },
+    [processFile]
+  );
+
   const handleCropComplete = useCallback((croppedBlob: Blob) => {
     const croppedFile = new File([croppedBlob], selectedFile?.name || 'cropped.jpg', {
       type: 'image/jpeg',
@@ -72,13 +109,26 @@ export function S3Uploader({
   }, []);
 
   const getPresignedUrl = async (fileName: string, contentType: string): Promise<PresignedUrlResponse> => {
+    const requestBody: Record<string, unknown> = {
+      fileName,
+      contentType,
+      projectCode,
+      ownerKey,
+    };
+    if (folder) {
+      requestBody.folder = folder;
+    }
+    if (tags && Object.keys(tags).length > 0) {
+      requestBody.tags = tags;
+    }
+
     const response = await fetch(`${apiEndpoint}/presigned-url`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Api-Key': apiKey,
       },
-      body: JSON.stringify({ fileName, contentType }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -181,8 +231,26 @@ export function S3Uploader({
     );
   }
 
+  const dropZoneClassName = [
+    's3-uploader__drop-zone',
+    isDragOver ? 's3-uploader--drag-over' : '',
+  ].filter(Boolean).join(' ');
+
   return (
     <div className="s3-uploader">
+      {enableDragDrop && (
+        <div
+          className={dropZoneClassName}
+          onDragOver={handleDragOver}
+          onDragEnter={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          data-testid="drop-zone"
+        >
+          <p>Drop file here or use the button below</p>
+        </div>
+      )}
+
       <div className="s3-uploader__input-container">
         <label htmlFor="file-input" className="s3-uploader__label">
           Select File
