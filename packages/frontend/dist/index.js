@@ -3,6 +3,8 @@ import imageCompression from 'browser-image-compression';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { jsxs, jsx } from 'react/jsx-runtime';
+import FilerobotImageEditor, { TABS, TOOLS } from 'react-filerobot-image-editor';
+export { TABS, TOOLS } from 'react-filerobot-image-editor';
 
 var DEFAULT_OPTIONS = {
   maxSizeMB: 2,
@@ -129,9 +131,105 @@ function ImageCropper({
     ] })
   ] });
 }
+function ImageEditor({
+  src,
+  onSave,
+  onClose,
+  defaultTab = "Adjust",
+  enabledTabs = ["Adjust", "Filters", "Finetune", "Resize", "Annotate"],
+  cropPresets,
+  aspectRatioLocked = false,
+  defaultAspectRatio
+}) {
+  const tabsIds = enabledTabs.map((tab) => {
+    switch (tab) {
+      case "Adjust":
+        return TABS.ADJUST;
+      case "Filters":
+        return TABS.FILTERS;
+      case "Finetune":
+        return TABS.FINETUNE;
+      case "Resize":
+        return TABS.RESIZE;
+      case "Annotate":
+        return TABS.ANNOTATE;
+      case "Watermark":
+        return TABS.WATERMARK;
+      default:
+        return TABS.ADJUST;
+    }
+  });
+  const defaultTabId = (() => {
+    switch (defaultTab) {
+      case "Adjust":
+        return TABS.ADJUST;
+      case "Filters":
+        return TABS.FILTERS;
+      case "Finetune":
+        return TABS.FINETUNE;
+      case "Resize":
+        return TABS.RESIZE;
+      case "Annotate":
+        return TABS.ANNOTATE;
+      case "Watermark":
+        return TABS.WATERMARK;
+      default:
+        return TABS.ADJUST;
+    }
+  })();
+  const handleSave = (editedImageObject) => {
+    if (!editedImageObject.imageBase64) return;
+    const base64Data = editedImageObject.imageBase64.split(",")[1];
+    const mimeType = editedImageObject.mimeType || "image/jpeg";
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+    onSave(blob, editedImageObject.fullName || "edited-image");
+  };
+  const cropConfig = {
+    autoResize: true
+  };
+  if (aspectRatioLocked && defaultAspectRatio) {
+    cropConfig.ratio = defaultAspectRatio;
+    cropConfig.noPresets = true;
+  } else if (cropPresets && cropPresets.length > 0) {
+    cropConfig.presetsItems = cropPresets.map((preset) => ({
+      titleKey: preset.label,
+      ratio: preset.ratio,
+      width: preset.width,
+      height: preset.height
+    }));
+  }
+  return /* @__PURE__ */ jsx("div", { className: "image-editor", style: { height: "100vh", width: "100%" }, children: /* @__PURE__ */ jsx(
+    FilerobotImageEditor,
+    {
+      source: src,
+      onSave: handleSave,
+      onClose,
+      tabsIds,
+      defaultTabId,
+      defaultToolId: TOOLS.CROP,
+      savingPixelRatio: 4,
+      previewPixelRatio: window.devicePixelRatio,
+      Crop: cropConfig,
+      Rotate: {
+        componentType: "slider"
+      },
+      Text: { text: "" }
+    }
+  ) });
+}
 function S3Uploader({
   apiEndpoint,
   apiKey,
+  projectCode,
+  ownerKey,
+  folder,
+  tags,
   cloudfrontDomain,
   onUploadComplete,
   onUploadError,
@@ -139,20 +237,23 @@ function S3Uploader({
   maxFileSizeMB = 10,
   allowedFileTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"],
   enableCrop = false,
+  enableEditor = false,
   enableCompression = true,
-  compressionOptions = { maxSizeMB: 2, maxWidthOrHeight: 1920 }
+  compressionOptions = { maxSizeMB: 2, maxWidthOrHeight: 1920 },
+  enableDragDrop = true,
+  editorConfig
 }) {
+  const editorEnabled = enableEditor || enableCrop;
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [status, setStatus] = useState("idle");
   const [progress, setProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [showCropper, setShowCropper] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef(null);
-  const handleFileSelect = useCallback(
-    async (event) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
+  const processFile = useCallback(
+    (file) => {
       if (!allowedFileTypes.includes(file.type)) {
         setErrorMessage(`Invalid file type. Allowed: ${allowedFileTypes.join(", ")}`);
         return;
@@ -165,31 +266,78 @@ function S3Uploader({
       setErrorMessage(null);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
-      if (enableCrop) {
-        setShowCropper(true);
+      if (editorEnabled) {
+        setIsEditorOpen(true);
       }
     },
-    [allowedFileTypes, maxFileSizeMB, enableCrop]
+    [allowedFileTypes, maxFileSizeMB, editorEnabled]
   );
-  const handleCropComplete = useCallback((croppedBlob) => {
-    const croppedFile = new File([croppedBlob], selectedFile?.name || "cropped.jpg", {
-      type: "image/jpeg"
+  const handleFileSelect = useCallback(
+    async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      processFile(file);
+    },
+    [processFile]
+  );
+  const handleDragOver = useCallback((event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+  const handleDragLeave = useCallback((event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+  const handleDrop = useCallback(
+    (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsDragOver(false);
+      const file = event.dataTransfer.files?.[0];
+      if (!file) return;
+      processFile(file);
+    },
+    [processFile]
+  );
+  const handleEditorSave = useCallback((blob, fileName) => {
+    const editedFile = new File([blob], fileName || selectedFile?.name || "edited.jpg", {
+      type: blob.type || "image/jpeg"
     });
-    setSelectedFile(croppedFile);
-    setPreviewUrl(URL.createObjectURL(croppedBlob));
-    setShowCropper(false);
+    setSelectedFile(editedFile);
+    setPreviewUrl(URL.createObjectURL(blob));
+    setIsEditorOpen(false);
   }, [selectedFile]);
+  const handleEditorClose = useCallback(() => {
+    setIsEditorOpen(false);
+  }, []);
+  const handleCropComplete = useCallback((croppedBlob) => {
+    handleEditorSave(croppedBlob, selectedFile?.name || "cropped.jpg");
+  }, [handleEditorSave, selectedFile]);
   const handleCropCancel = useCallback(() => {
-    setShowCropper(false);
+    setIsEditorOpen(false);
   }, []);
   const getPresignedUrl = async (fileName, contentType) => {
+    const requestBody = {
+      fileName,
+      contentType,
+      projectCode,
+      ownerKey
+    };
+    if (folder) {
+      requestBody.folder = folder;
+    }
+    if (tags && Object.keys(tags).length > 0) {
+      requestBody.tags = tags;
+    }
     const response = await fetch(`${apiEndpoint}/presigned-url`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Api-Key": apiKey
       },
-      body: JSON.stringify({ fileName, contentType })
+      body: JSON.stringify(requestBody)
     });
     if (!response.ok) {
       throw new Error(`Failed to get presigned URL: ${response.status}`);
@@ -256,12 +404,27 @@ function S3Uploader({
     setStatus("idle");
     setProgress(0);
     setErrorMessage(null);
-    setShowCropper(false);
+    setIsEditorOpen(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   }, []);
-  if (showCropper && previewUrl) {
+  if (isEditorOpen && previewUrl && enableEditor) {
+    return /* @__PURE__ */ jsx(
+      ImageEditor,
+      {
+        src: previewUrl,
+        onSave: handleEditorSave,
+        onClose: handleEditorClose,
+        defaultTab: editorConfig?.defaultTab,
+        enabledTabs: editorConfig?.enabledTabs,
+        cropPresets: editorConfig?.cropPresets,
+        aspectRatioLocked: editorConfig?.aspectRatioLocked,
+        defaultAspectRatio: editorConfig?.defaultAspectRatio
+      }
+    );
+  }
+  if (isEditorOpen && previewUrl && enableCrop && !enableEditor) {
     return /* @__PURE__ */ jsx(
       ImageCropper,
       {
@@ -271,7 +434,48 @@ function S3Uploader({
       }
     );
   }
+  const dropZoneStyle = {
+    border: `2px dashed ${isDragOver ? "#2196F3" : "#ccc"}`,
+    borderRadius: "8px",
+    padding: "40px 20px",
+    textAlign: "center",
+    backgroundColor: isDragOver ? "#e3f2fd" : "#fafafa",
+    transition: "all 0.2s ease",
+    cursor: "pointer",
+    marginBottom: "16px"
+  };
+  const dropZoneIconStyle = {
+    fontSize: "48px",
+    marginBottom: "8px",
+    color: isDragOver ? "#2196F3" : "#999"
+  };
+  const dropZoneTextStyle = {
+    margin: 0,
+    color: isDragOver ? "#2196F3" : "#666",
+    fontSize: "14px"
+  };
+  const dropZoneClassName = [
+    "s3-uploader__drop-zone",
+    isDragOver ? "s3-uploader--drag-over" : ""
+  ].filter(Boolean).join(" ");
   return /* @__PURE__ */ jsxs("div", { className: "s3-uploader", children: [
+    enableDragDrop && /* @__PURE__ */ jsxs(
+      "div",
+      {
+        className: dropZoneClassName,
+        style: dropZoneStyle,
+        onDragOver: handleDragOver,
+        onDragEnter: handleDragOver,
+        onDragLeave: handleDragLeave,
+        onDrop: handleDrop,
+        onClick: () => fileInputRef.current?.click(),
+        "data-testid": "drop-zone",
+        children: [
+          /* @__PURE__ */ jsx("div", { style: dropZoneIconStyle, children: isDragOver ? "\u{1F4E5}" : "\u{1F4C1}" }),
+          /* @__PURE__ */ jsx("p", { style: dropZoneTextStyle, children: isDragOver ? "Drop to upload" : "Drag & drop image here, or click to select" })
+        ]
+      }
+    ),
     /* @__PURE__ */ jsxs("div", { className: "s3-uploader__input-container", children: [
       /* @__PURE__ */ jsx("label", { htmlFor: "file-input", className: "s3-uploader__label", children: "Select File" }),
       /* @__PURE__ */ jsx(
@@ -287,7 +491,7 @@ function S3Uploader({
         }
       )
     ] }),
-    previewUrl && !showCropper && /* @__PURE__ */ jsx("div", { className: "s3-uploader__preview", children: /* @__PURE__ */ jsx(
+    previewUrl && !isEditorOpen && /* @__PURE__ */ jsx("div", { className: "s3-uploader__preview", children: /* @__PURE__ */ jsx(
       "img",
       {
         src: previewUrl,
@@ -340,6 +544,43 @@ function S3Uploader({
   ] });
 }
 
-export { ImageCropper, S3Uploader, compressImage };
+// src/utils/api.ts
+async function deleteObject(params) {
+  const { apiEndpoint, apiKey, key } = params;
+  const response = await fetch(`${apiEndpoint}/objects`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Api-Key": apiKey
+    },
+    body: JSON.stringify({ key })
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to delete object: ${response.status}`);
+  }
+  return response.json();
+}
+async function listObjects(params) {
+  const { apiEndpoint, apiKey, projectCode, ownerKey, folder, limit, cursor, includeTags } = params;
+  const searchParams = new URLSearchParams();
+  searchParams.set("projectCode", projectCode);
+  if (ownerKey) searchParams.set("ownerKey", ownerKey);
+  if (folder) searchParams.set("folder", folder);
+  if (limit) searchParams.set("limit", String(limit));
+  if (cursor) searchParams.set("cursor", cursor);
+  if (includeTags) searchParams.set("includeTags", "true");
+  const response = await fetch(`${apiEndpoint}/objects?${searchParams.toString()}`, {
+    method: "GET",
+    headers: {
+      "X-Api-Key": apiKey
+    }
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to list objects: ${response.status}`);
+  }
+  return response.json();
+}
+
+export { ImageCropper, ImageEditor, S3Uploader, compressImage, deleteObject, listObjects };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

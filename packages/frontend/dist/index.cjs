@@ -5,11 +5,13 @@ var imageCompression = require('browser-image-compression');
 var ReactCrop = require('react-image-crop');
 require('react-image-crop/dist/ReactCrop.css');
 var jsxRuntime = require('react/jsx-runtime');
+var FilerobotImageEditor = require('react-filerobot-image-editor');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
 var imageCompression__default = /*#__PURE__*/_interopDefault(imageCompression);
 var ReactCrop__default = /*#__PURE__*/_interopDefault(ReactCrop);
+var FilerobotImageEditor__default = /*#__PURE__*/_interopDefault(FilerobotImageEditor);
 
 var DEFAULT_OPTIONS = {
   maxSizeMB: 2,
@@ -136,9 +138,105 @@ function ImageCropper({
     ] })
   ] });
 }
+function ImageEditor({
+  src,
+  onSave,
+  onClose,
+  defaultTab = "Adjust",
+  enabledTabs = ["Adjust", "Filters", "Finetune", "Resize", "Annotate"],
+  cropPresets,
+  aspectRatioLocked = false,
+  defaultAspectRatio
+}) {
+  const tabsIds = enabledTabs.map((tab) => {
+    switch (tab) {
+      case "Adjust":
+        return FilerobotImageEditor.TABS.ADJUST;
+      case "Filters":
+        return FilerobotImageEditor.TABS.FILTERS;
+      case "Finetune":
+        return FilerobotImageEditor.TABS.FINETUNE;
+      case "Resize":
+        return FilerobotImageEditor.TABS.RESIZE;
+      case "Annotate":
+        return FilerobotImageEditor.TABS.ANNOTATE;
+      case "Watermark":
+        return FilerobotImageEditor.TABS.WATERMARK;
+      default:
+        return FilerobotImageEditor.TABS.ADJUST;
+    }
+  });
+  const defaultTabId = (() => {
+    switch (defaultTab) {
+      case "Adjust":
+        return FilerobotImageEditor.TABS.ADJUST;
+      case "Filters":
+        return FilerobotImageEditor.TABS.FILTERS;
+      case "Finetune":
+        return FilerobotImageEditor.TABS.FINETUNE;
+      case "Resize":
+        return FilerobotImageEditor.TABS.RESIZE;
+      case "Annotate":
+        return FilerobotImageEditor.TABS.ANNOTATE;
+      case "Watermark":
+        return FilerobotImageEditor.TABS.WATERMARK;
+      default:
+        return FilerobotImageEditor.TABS.ADJUST;
+    }
+  })();
+  const handleSave = (editedImageObject) => {
+    if (!editedImageObject.imageBase64) return;
+    const base64Data = editedImageObject.imageBase64.split(",")[1];
+    const mimeType = editedImageObject.mimeType || "image/jpeg";
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+    onSave(blob, editedImageObject.fullName || "edited-image");
+  };
+  const cropConfig = {
+    autoResize: true
+  };
+  if (aspectRatioLocked && defaultAspectRatio) {
+    cropConfig.ratio = defaultAspectRatio;
+    cropConfig.noPresets = true;
+  } else if (cropPresets && cropPresets.length > 0) {
+    cropConfig.presetsItems = cropPresets.map((preset) => ({
+      titleKey: preset.label,
+      ratio: preset.ratio,
+      width: preset.width,
+      height: preset.height
+    }));
+  }
+  return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "image-editor", style: { height: "100vh", width: "100%" }, children: /* @__PURE__ */ jsxRuntime.jsx(
+    FilerobotImageEditor__default.default,
+    {
+      source: src,
+      onSave: handleSave,
+      onClose,
+      tabsIds,
+      defaultTabId,
+      defaultToolId: FilerobotImageEditor.TOOLS.CROP,
+      savingPixelRatio: 4,
+      previewPixelRatio: window.devicePixelRatio,
+      Crop: cropConfig,
+      Rotate: {
+        componentType: "slider"
+      },
+      Text: { text: "" }
+    }
+  ) });
+}
 function S3Uploader({
   apiEndpoint,
   apiKey,
+  projectCode,
+  ownerKey,
+  folder,
+  tags,
   cloudfrontDomain,
   onUploadComplete,
   onUploadError,
@@ -146,20 +244,23 @@ function S3Uploader({
   maxFileSizeMB = 10,
   allowedFileTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"],
   enableCrop = false,
+  enableEditor = false,
   enableCompression = true,
-  compressionOptions = { maxSizeMB: 2, maxWidthOrHeight: 1920 }
+  compressionOptions = { maxSizeMB: 2, maxWidthOrHeight: 1920 },
+  enableDragDrop = true,
+  editorConfig
 }) {
+  const editorEnabled = enableEditor || enableCrop;
   const [selectedFile, setSelectedFile] = react.useState(null);
   const [previewUrl, setPreviewUrl] = react.useState(null);
   const [status, setStatus] = react.useState("idle");
   const [progress, setProgress] = react.useState(0);
   const [errorMessage, setErrorMessage] = react.useState(null);
-  const [showCropper, setShowCropper] = react.useState(false);
+  const [isEditorOpen, setIsEditorOpen] = react.useState(false);
+  const [isDragOver, setIsDragOver] = react.useState(false);
   const fileInputRef = react.useRef(null);
-  const handleFileSelect = react.useCallback(
-    async (event) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
+  const processFile = react.useCallback(
+    (file) => {
       if (!allowedFileTypes.includes(file.type)) {
         setErrorMessage(`Invalid file type. Allowed: ${allowedFileTypes.join(", ")}`);
         return;
@@ -172,31 +273,78 @@ function S3Uploader({
       setErrorMessage(null);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
-      if (enableCrop) {
-        setShowCropper(true);
+      if (editorEnabled) {
+        setIsEditorOpen(true);
       }
     },
-    [allowedFileTypes, maxFileSizeMB, enableCrop]
+    [allowedFileTypes, maxFileSizeMB, editorEnabled]
   );
-  const handleCropComplete = react.useCallback((croppedBlob) => {
-    const croppedFile = new File([croppedBlob], selectedFile?.name || "cropped.jpg", {
-      type: "image/jpeg"
+  const handleFileSelect = react.useCallback(
+    async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      processFile(file);
+    },
+    [processFile]
+  );
+  const handleDragOver = react.useCallback((event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+  const handleDragLeave = react.useCallback((event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+  const handleDrop = react.useCallback(
+    (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsDragOver(false);
+      const file = event.dataTransfer.files?.[0];
+      if (!file) return;
+      processFile(file);
+    },
+    [processFile]
+  );
+  const handleEditorSave = react.useCallback((blob, fileName) => {
+    const editedFile = new File([blob], fileName || selectedFile?.name || "edited.jpg", {
+      type: blob.type || "image/jpeg"
     });
-    setSelectedFile(croppedFile);
-    setPreviewUrl(URL.createObjectURL(croppedBlob));
-    setShowCropper(false);
+    setSelectedFile(editedFile);
+    setPreviewUrl(URL.createObjectURL(blob));
+    setIsEditorOpen(false);
   }, [selectedFile]);
+  const handleEditorClose = react.useCallback(() => {
+    setIsEditorOpen(false);
+  }, []);
+  const handleCropComplete = react.useCallback((croppedBlob) => {
+    handleEditorSave(croppedBlob, selectedFile?.name || "cropped.jpg");
+  }, [handleEditorSave, selectedFile]);
   const handleCropCancel = react.useCallback(() => {
-    setShowCropper(false);
+    setIsEditorOpen(false);
   }, []);
   const getPresignedUrl = async (fileName, contentType) => {
+    const requestBody = {
+      fileName,
+      contentType,
+      projectCode,
+      ownerKey
+    };
+    if (folder) {
+      requestBody.folder = folder;
+    }
+    if (tags && Object.keys(tags).length > 0) {
+      requestBody.tags = tags;
+    }
     const response = await fetch(`${apiEndpoint}/presigned-url`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Api-Key": apiKey
       },
-      body: JSON.stringify({ fileName, contentType })
+      body: JSON.stringify(requestBody)
     });
     if (!response.ok) {
       throw new Error(`Failed to get presigned URL: ${response.status}`);
@@ -263,12 +411,27 @@ function S3Uploader({
     setStatus("idle");
     setProgress(0);
     setErrorMessage(null);
-    setShowCropper(false);
+    setIsEditorOpen(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   }, []);
-  if (showCropper && previewUrl) {
+  if (isEditorOpen && previewUrl && enableEditor) {
+    return /* @__PURE__ */ jsxRuntime.jsx(
+      ImageEditor,
+      {
+        src: previewUrl,
+        onSave: handleEditorSave,
+        onClose: handleEditorClose,
+        defaultTab: editorConfig?.defaultTab,
+        enabledTabs: editorConfig?.enabledTabs,
+        cropPresets: editorConfig?.cropPresets,
+        aspectRatioLocked: editorConfig?.aspectRatioLocked,
+        defaultAspectRatio: editorConfig?.defaultAspectRatio
+      }
+    );
+  }
+  if (isEditorOpen && previewUrl && enableCrop && !enableEditor) {
     return /* @__PURE__ */ jsxRuntime.jsx(
       ImageCropper,
       {
@@ -278,7 +441,48 @@ function S3Uploader({
       }
     );
   }
+  const dropZoneStyle = {
+    border: `2px dashed ${isDragOver ? "#2196F3" : "#ccc"}`,
+    borderRadius: "8px",
+    padding: "40px 20px",
+    textAlign: "center",
+    backgroundColor: isDragOver ? "#e3f2fd" : "#fafafa",
+    transition: "all 0.2s ease",
+    cursor: "pointer",
+    marginBottom: "16px"
+  };
+  const dropZoneIconStyle = {
+    fontSize: "48px",
+    marginBottom: "8px",
+    color: isDragOver ? "#2196F3" : "#999"
+  };
+  const dropZoneTextStyle = {
+    margin: 0,
+    color: isDragOver ? "#2196F3" : "#666",
+    fontSize: "14px"
+  };
+  const dropZoneClassName = [
+    "s3-uploader__drop-zone",
+    isDragOver ? "s3-uploader--drag-over" : ""
+  ].filter(Boolean).join(" ");
   return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "s3-uploader", children: [
+    enableDragDrop && /* @__PURE__ */ jsxRuntime.jsxs(
+      "div",
+      {
+        className: dropZoneClassName,
+        style: dropZoneStyle,
+        onDragOver: handleDragOver,
+        onDragEnter: handleDragOver,
+        onDragLeave: handleDragLeave,
+        onDrop: handleDrop,
+        onClick: () => fileInputRef.current?.click(),
+        "data-testid": "drop-zone",
+        children: [
+          /* @__PURE__ */ jsxRuntime.jsx("div", { style: dropZoneIconStyle, children: isDragOver ? "\u{1F4E5}" : "\u{1F4C1}" }),
+          /* @__PURE__ */ jsxRuntime.jsx("p", { style: dropZoneTextStyle, children: isDragOver ? "Drop to upload" : "Drag & drop image here, or click to select" })
+        ]
+      }
+    ),
     /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "s3-uploader__input-container", children: [
       /* @__PURE__ */ jsxRuntime.jsx("label", { htmlFor: "file-input", className: "s3-uploader__label", children: "Select File" }),
       /* @__PURE__ */ jsxRuntime.jsx(
@@ -294,7 +498,7 @@ function S3Uploader({
         }
       )
     ] }),
-    previewUrl && !showCropper && /* @__PURE__ */ jsxRuntime.jsx("div", { className: "s3-uploader__preview", children: /* @__PURE__ */ jsxRuntime.jsx(
+    previewUrl && !isEditorOpen && /* @__PURE__ */ jsxRuntime.jsx("div", { className: "s3-uploader__preview", children: /* @__PURE__ */ jsxRuntime.jsx(
       "img",
       {
         src: previewUrl,
@@ -347,8 +551,56 @@ function S3Uploader({
   ] });
 }
 
+// src/utils/api.ts
+async function deleteObject(params) {
+  const { apiEndpoint, apiKey, key } = params;
+  const response = await fetch(`${apiEndpoint}/objects`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Api-Key": apiKey
+    },
+    body: JSON.stringify({ key })
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to delete object: ${response.status}`);
+  }
+  return response.json();
+}
+async function listObjects(params) {
+  const { apiEndpoint, apiKey, projectCode, ownerKey, folder, limit, cursor, includeTags } = params;
+  const searchParams = new URLSearchParams();
+  searchParams.set("projectCode", projectCode);
+  if (ownerKey) searchParams.set("ownerKey", ownerKey);
+  if (folder) searchParams.set("folder", folder);
+  if (limit) searchParams.set("limit", String(limit));
+  if (cursor) searchParams.set("cursor", cursor);
+  if (includeTags) searchParams.set("includeTags", "true");
+  const response = await fetch(`${apiEndpoint}/objects?${searchParams.toString()}`, {
+    method: "GET",
+    headers: {
+      "X-Api-Key": apiKey
+    }
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to list objects: ${response.status}`);
+  }
+  return response.json();
+}
+
+Object.defineProperty(exports, "TABS", {
+  enumerable: true,
+  get: function () { return FilerobotImageEditor.TABS; }
+});
+Object.defineProperty(exports, "TOOLS", {
+  enumerable: true,
+  get: function () { return FilerobotImageEditor.TOOLS; }
+});
 exports.ImageCropper = ImageCropper;
+exports.ImageEditor = ImageEditor;
 exports.S3Uploader = S3Uploader;
 exports.compressImage = compressImage;
+exports.deleteObject = deleteObject;
+exports.listObjects = listObjects;
 //# sourceMappingURL=index.cjs.map
 //# sourceMappingURL=index.cjs.map

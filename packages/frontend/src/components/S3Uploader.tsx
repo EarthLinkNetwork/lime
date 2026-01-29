@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { compressImage } from '../utils/imageCompression';
 import { ImageCropper } from './ImageCropper';
+import { ImageEditor } from './ImageEditor';
 import type { S3UploaderProps, PresignedUrlResponse } from '../types';
 
-type UploadStatus = 'idle' | 'compressing' | 'cropping' | 'uploading' | 'success' | 'error';
+type UploadStatus = 'idle' | 'compressing' | 'editing' | 'uploading' | 'success' | 'error';
 
 export function S3Uploader({
   apiEndpoint,
@@ -19,16 +20,21 @@ export function S3Uploader({
   maxFileSizeMB = 10,
   allowedFileTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
   enableCrop = false,
+  enableEditor = false,
   enableCompression = true,
   compressionOptions = { maxSizeMB: 2, maxWidthOrHeight: 1920 },
   enableDragDrop = true,
+  editorConfig,
 }: S3UploaderProps) {
+  // Support legacy enableCrop prop
+  const editorEnabled = enableEditor || enableCrop;
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<UploadStatus>('idle');
   const [progress, setProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showCropper, setShowCropper] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -53,12 +59,12 @@ export function S3Uploader({
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
 
-      // Show cropper if enabled
-      if (enableCrop) {
-        setShowCropper(true);
+      // Show editor if enabled
+      if (editorEnabled) {
+        setIsEditorOpen(true);
       }
     },
-    [allowedFileTypes, maxFileSizeMB, enableCrop]
+    [allowedFileTypes, maxFileSizeMB, editorEnabled]
   );
 
   const handleFileSelect = useCallback(
@@ -95,17 +101,26 @@ export function S3Uploader({
     [processFile]
   );
 
-  const handleCropComplete = useCallback((croppedBlob: Blob) => {
-    const croppedFile = new File([croppedBlob], selectedFile?.name || 'cropped.jpg', {
-      type: 'image/jpeg',
+  const handleEditorSave = useCallback((blob: Blob, fileName: string) => {
+    const editedFile = new File([blob], fileName || selectedFile?.name || 'edited.jpg', {
+      type: blob.type || 'image/jpeg',
     });
-    setSelectedFile(croppedFile);
-    setPreviewUrl(URL.createObjectURL(croppedBlob));
-    setShowCropper(false);
+    setSelectedFile(editedFile);
+    setPreviewUrl(URL.createObjectURL(blob));
+    setIsEditorOpen(false);
   }, [selectedFile]);
 
+  const handleEditorClose = useCallback(() => {
+    setIsEditorOpen(false);
+  }, []);
+
+  // Legacy support for ImageCropper
+  const handleCropComplete = useCallback((croppedBlob: Blob) => {
+    handleEditorSave(croppedBlob, selectedFile?.name || 'cropped.jpg');
+  }, [handleEditorSave, selectedFile]);
+
   const handleCropCancel = useCallback(() => {
-    setShowCropper(false);
+    setIsEditorOpen(false);
   }, []);
 
   const getPresignedUrl = async (fileName: string, contentType: string): Promise<PresignedUrlResponse> => {
@@ -215,13 +230,30 @@ export function S3Uploader({
     setStatus('idle');
     setProgress(0);
     setErrorMessage(null);
-    setShowCropper(false);
+    setIsEditorOpen(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   }, []);
 
-  if (showCropper && previewUrl) {
+  // Show full image editor if enabled
+  if (isEditorOpen && previewUrl && enableEditor) {
+    return (
+      <ImageEditor
+        src={previewUrl}
+        onSave={handleEditorSave}
+        onClose={handleEditorClose}
+        defaultTab={editorConfig?.defaultTab}
+        enabledTabs={editorConfig?.enabledTabs}
+        cropPresets={editorConfig?.cropPresets}
+        aspectRatioLocked={editorConfig?.aspectRatioLocked}
+        defaultAspectRatio={editorConfig?.defaultAspectRatio}
+      />
+    );
+  }
+
+  // Legacy: Show simple cropper if enableCrop is used
+  if (isEditorOpen && previewUrl && enableCrop && !enableEditor) {
     return (
       <ImageCropper
         src={previewUrl}
@@ -230,6 +262,29 @@ export function S3Uploader({
       />
     );
   }
+
+  const dropZoneStyle: React.CSSProperties = {
+    border: `2px dashed ${isDragOver ? '#2196F3' : '#ccc'}`,
+    borderRadius: '8px',
+    padding: '40px 20px',
+    textAlign: 'center',
+    backgroundColor: isDragOver ? '#e3f2fd' : '#fafafa',
+    transition: 'all 0.2s ease',
+    cursor: 'pointer',
+    marginBottom: '16px',
+  };
+
+  const dropZoneIconStyle: React.CSSProperties = {
+    fontSize: '48px',
+    marginBottom: '8px',
+    color: isDragOver ? '#2196F3' : '#999',
+  };
+
+  const dropZoneTextStyle: React.CSSProperties = {
+    margin: 0,
+    color: isDragOver ? '#2196F3' : '#666',
+    fontSize: '14px',
+  };
 
   const dropZoneClassName = [
     's3-uploader__drop-zone',
@@ -241,13 +296,20 @@ export function S3Uploader({
       {enableDragDrop && (
         <div
           className={dropZoneClassName}
+          style={dropZoneStyle}
           onDragOver={handleDragOver}
           onDragEnter={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
           data-testid="drop-zone"
         >
-          <p>Drop file here or use the button below</p>
+          <div style={dropZoneIconStyle}>
+            {isDragOver ? '📥' : '📁'}
+          </div>
+          <p style={dropZoneTextStyle}>
+            {isDragOver ? 'Drop to upload' : 'Drag & drop image here, or click to select'}
+          </p>
         </div>
       )}
 
@@ -266,7 +328,7 @@ export function S3Uploader({
         />
       </div>
 
-      {previewUrl && !showCropper && (
+      {previewUrl && !isEditorOpen && (
         <div className="s3-uploader__preview">
           <img
             src={previewUrl}

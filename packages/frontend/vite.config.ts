@@ -31,5 +31,8 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    alias: {
+      'react-filerobot-image-editor': resolve(__dirname, 'src/__mocks__/react-filerobot-image-editor.tsx'),
+    },
   },
 });

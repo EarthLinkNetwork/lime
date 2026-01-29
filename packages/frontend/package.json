@@ -34,7 +34,11 @@
   },
   "dependencies": {
     "browser-image-compression": "^2.0.2",
-    "react-image-crop": "^11.0.6"
+    "konva": "^9.3.20",
+    "react-filerobot-image-editor": "^4.9.1",
+    "react-image-crop": "^11.0.6",
+    "react-konva": "^18.2.14",
+    "styled-components": "^6.3.8"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",

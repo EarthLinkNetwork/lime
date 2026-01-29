@@ -1,3 +1,14 @@
+/** Available tabs in the image editor */
+export type ImageEditorTab = 'Adjust' | 'Filters' | 'Finetune' | 'Resize' | 'Annotate' | 'Watermark';
+
+/** Crop preset configuration */
+export interface CropPreset {
+  label: string;
+  ratio?: number;
+  width?: number;
+  height?: number;
+}
+
 export interface S3UploaderProps {
   apiEndpoint: string;
   apiKey: string;
@@ -16,11 +27,27 @@ export interface S3UploaderProps {
   onProgress?: (progress: number) => void;
   maxFileSizeMB?: number;
   allowedFileTypes?: string[];
+  /** @deprecated Use enableEditor instead */
   enableCrop?: boolean;
+  /** Enable full image editor (crop, rotate, filters, etc.) - default: false */
+  enableEditor?: boolean;
   enableCompression?: boolean;
   compressionOptions?: CompressionOptions;
   /** Enable drag & drop upload (default: true) */
   enableDragDrop?: boolean;
+  /** Image editor configuration */
+  editorConfig?: {
+    /** Tabs to show in editor (default: all) */
+    enabledTabs?: ImageEditorTab[];
+    /** Default tab when editor opens */
+    defaultTab?: ImageEditorTab;
+    /** Crop presets (e.g., 1:1, 4:3, 16:9) */
+    cropPresets?: CropPreset[];
+    /** Lock aspect ratio */
+    aspectRatioLocked?: boolean;
+    /** Default aspect ratio when locked */
+    defaultAspectRatio?: number;
+  };
 }
 
 export interface ImageCropperProps {
@@ -28,6 +55,25 @@ export interface ImageCropperProps {
   onCropComplete: (croppedImageBlob: Blob) => void;
   onCancel: () => void;
   aspectRatio?: number;
+}
+
+export interface ImageEditorProps {
+  /** Image source URL or base64 */
+  src: string;
+  /** Called when user saves the edited image */
+  onSave: (blob: Blob, fileName: string) => void;
+  /** Called when user closes the editor */
+  onClose: () => void;
+  /** Default tab to open (default: 'Adjust') */
+  defaultTab?: ImageEditorTab;
+  /** Tabs to show in editor */
+  enabledTabs?: ImageEditorTab[];
+  /** Crop presets */
+  cropPresets?: CropPreset[];
+  /** Lock aspect ratio */
+  aspectRatioLocked?: boolean;
+  /** Default aspect ratio when locked */
+  defaultAspectRatio?: number;
 }
 
 export interface CompressionOptions {
