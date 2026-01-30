@@ -85,7 +85,20 @@ export function ImageEditor({
   }
 
   return (
-    <div className="image-editor" style={{ height: '100vh', width: '100%' }}>
+    <div
+      className="image-editor-overlay"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
+        backgroundColor: '#1a1a1a',
+      }}
+    >
       <FilerobotImageEditor
         source={src}
         onSave={handleSave}

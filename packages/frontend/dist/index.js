@@ -96,24 +96,41 @@ function ImageEditor({
       height: preset.height
     }));
   }
-  return /* @__PURE__ */ jsx("div", { className: "image-editor", style: { height: "100vh", width: "100%" }, children: /* @__PURE__ */ jsx(
-    FilerobotImageEditor,
+  return /* @__PURE__ */ jsx(
+    "div",
     {
-      source: src,
-      onSave: handleSave,
-      onClose,
-      tabsIds,
-      defaultTabId,
-      defaultToolId: TOOLS.CROP,
-      savingPixelRatio: 4,
-      previewPixelRatio: window.devicePixelRatio,
-      Crop: cropConfig,
-      Rotate: {
-        componentType: "slider"
+      className: "image-editor-overlay",
+      style: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100vw",
+        height: "100vh",
+        zIndex: 99999,
+        backgroundColor: "#1a1a1a"
       },
-      Text: { text: "" }
+      children: /* @__PURE__ */ jsx(
+        FilerobotImageEditor,
+        {
+          source: src,
+          onSave: handleSave,
+          onClose,
+          tabsIds,
+          defaultTabId,
+          defaultToolId: TOOLS.CROP,
+          savingPixelRatio: 4,
+          previewPixelRatio: window.devicePixelRatio,
+          Crop: cropConfig,
+          Rotate: {
+            componentType: "slider"
+          },
+          Text: { text: "" }
+        }
+      )
     }
-  ) });
+  );
 }
 var init_ImageEditor = __esm({
   "src/components/ImageEditor.tsx"() {
