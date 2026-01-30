@@ -110,27 +110,24 @@ export function ImageEditor({
   }
 
   const editorContent = (
-    <>
-      {/* Semi-transparent backdrop */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        }}
-        onClick={onClose}
-      />
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      }}
+      onClick={onClose}
+    >
       {/* Editor modal */}
       <div
         className="image-editor-modal"
         style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
           width: '90vw',
           height: '90vh',
           maxWidth: '1400px',
@@ -138,7 +135,6 @@ export function ImageEditor({
           backgroundColor: '#1a1a1a',
           borderRadius: '12px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-          overflow: 'hidden',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -158,7 +154,7 @@ export function ImageEditor({
           Text={{ text: '' }}
         />
       </div>
-    </>
+    </div>
   );
 
   // Use portal to render outside of any parent transform context
