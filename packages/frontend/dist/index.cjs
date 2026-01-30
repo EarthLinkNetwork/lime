@@ -121,6 +121,11 @@ function ImageEditor({
   if (!portalContainer) {
     return null;
   }
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
   const editorContent = /* @__PURE__ */ jsxRuntime.jsx(
     "div",
     {
@@ -135,7 +140,7 @@ function ImageEditor({
         justifyContent: "center",
         backgroundColor: "rgba(0, 0, 0, 0.7)"
       },
-      onClick: onClose,
+      onClick: handleBackdropClick,
       children: /* @__PURE__ */ jsxRuntime.jsx(
         "div",
         {

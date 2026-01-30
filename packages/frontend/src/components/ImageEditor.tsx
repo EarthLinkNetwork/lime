@@ -109,6 +109,15 @@ export function ImageEditor({
     return null;
   }
 
+  // Handle backdrop click - only close if clicking directly on backdrop
+  // react-filerobot-image-editor uses portals for dropdowns, so we can't rely on stopPropagation
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only close if the click target is the backdrop itself, not any child elements
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   const editorContent = (
     <div
       style={{
@@ -122,7 +131,7 @@ export function ImageEditor({
         justifyContent: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
       }}
-      onClick={onClose}
+      onClick={handleBackdropClick}
     >
       {/* Editor modal */}
       <div
@@ -136,7 +145,7 @@ export function ImageEditor({
           borderRadius: '12px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
         }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()} // Extra safety to prevent any bubble-through
       >
         <FilerobotImageEditor
           source={src}
