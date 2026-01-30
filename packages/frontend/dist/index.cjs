@@ -44,7 +44,16 @@ function ImageEditor({
 }) {
   const [portalContainer, setPortalContainer] = React.useState(null);
   React.useEffect(() => {
-    setPortalContainer(document.body);
+    const container = document.createElement("div");
+    container.id = "lime-image-editor-portal";
+    container.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999;";
+    document.body.appendChild(container);
+    setPortalContainer(container);
+    return () => {
+      if (container.parentNode) {
+        container.parentNode.removeChild(container);
+      }
+    };
   }, []);
   const tabsIds = enabledTabs.map((tab) => {
     switch (tab) {
@@ -112,39 +121,61 @@ function ImageEditor({
   if (!portalContainer) {
     return null;
   }
-  const editorContent = /* @__PURE__ */ jsxRuntime.jsx(
-    "div",
-    {
-      className: "image-editor-overlay",
-      style: {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        zIndex: 99999,
-        backgroundColor: "#1a1a1a"
-      },
-      children: /* @__PURE__ */ jsxRuntime.jsx(
-        FilerobotImageEditor__default.default,
-        {
-          source: src,
-          onSave: handleSave,
-          onClose,
-          tabsIds,
-          defaultTabId,
-          defaultToolId: FilerobotImageEditor.TOOLS.CROP,
-          savingPixelRatio: 4,
-          previewPixelRatio: window.devicePixelRatio,
-          Crop: cropConfig,
-          Rotate: {
-            componentType: "slider"
-          },
-          Text: { text: "" }
-        }
-      )
-    }
-  );
+  const editorContent = /* @__PURE__ */ jsxRuntime.jsxs(jsxRuntime.Fragment, { children: [
+    /* @__PURE__ */ jsxRuntime.jsx(
+      "div",
+      {
+        style: {
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          backgroundColor: "rgba(0, 0, 0, 0.7)"
+        },
+        onClick: onClose
+      }
+    ),
+    /* @__PURE__ */ jsxRuntime.jsx(
+      "div",
+      {
+        className: "image-editor-modal",
+        style: {
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "90vw",
+          height: "90vh",
+          maxWidth: "1400px",
+          maxHeight: "900px",
+          backgroundColor: "#1a1a1a",
+          borderRadius: "12px",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+          overflow: "hidden"
+        },
+        onClick: (e) => e.stopPropagation(),
+        children: /* @__PURE__ */ jsxRuntime.jsx(
+          FilerobotImageEditor__default.default,
+          {
+            source: src,
+            onSave: handleSave,
+            onClose,
+            tabsIds,
+            defaultTabId,
+            defaultToolId: FilerobotImageEditor.TOOLS.CROP,
+            savingPixelRatio: 4,
+            previewPixelRatio: window.devicePixelRatio,
+            Crop: cropConfig,
+            Rotate: {
+              componentType: "slider"
+            },
+            Text: { text: "" }
+          }
+        )
+      }
+    )
+  ] });
   return reactDom.createPortal(editorContent, portalContainer);
 }
 var init_ImageEditor = __esm({

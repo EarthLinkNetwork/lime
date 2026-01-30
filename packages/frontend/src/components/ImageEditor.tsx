@@ -16,8 +16,19 @@ export function ImageEditor({
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    // Create portal container on mount
-    setPortalContainer(document.body);
+    // Create a dedicated portal container to avoid conflicts
+    const container = document.createElement('div');
+    container.id = 'lime-image-editor-portal';
+    container.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999;';
+    document.body.appendChild(container);
+    setPortalContainer(container);
+
+    // Cleanup on unmount
+    return () => {
+      if (container.parentNode) {
+        container.parentNode.removeChild(container);
+      }
+    };
   }, []);
 
   // Map string tab names to TABS enum
@@ -99,34 +110,55 @@ export function ImageEditor({
   }
 
   const editorContent = (
-    <div
-      className="image-editor-overlay"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        zIndex: 99999,
-        backgroundColor: '#1a1a1a',
-      }}
-    >
-      <FilerobotImageEditor
-        source={src}
-        onSave={handleSave}
-        onClose={onClose}
-        tabsIds={tabsIds}
-        defaultTabId={defaultTabId}
-        defaultToolId={TOOLS.CROP}
-        savingPixelRatio={4}
-        previewPixelRatio={window.devicePixelRatio}
-        Crop={cropConfig}
-        Rotate={{
-          componentType: 'slider',
+    <>
+      {/* Semi-transparent backdrop */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
         }}
-        Text={{ text: '' }}
+        onClick={onClose}
       />
-    </div>
+      {/* Editor modal */}
+      <div
+        className="image-editor-modal"
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '90vw',
+          height: '90vh',
+          maxWidth: '1400px',
+          maxHeight: '900px',
+          backgroundColor: '#1a1a1a',
+          borderRadius: '12px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          overflow: 'hidden',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <FilerobotImageEditor
+          source={src}
+          onSave={handleSave}
+          onClose={onClose}
+          tabsIds={tabsIds}
+          defaultTabId={defaultTabId}
+          defaultToolId={TOOLS.CROP}
+          savingPixelRatio={4}
+          previewPixelRatio={window.devicePixelRatio}
+          Crop={cropConfig}
+          Rotate={{
+            componentType: 'slider',
+          }}
+          Text={{ text: '' }}
+        />
+      </div>
+    </>
   );
 
   // Use portal to render outside of any parent transform context
