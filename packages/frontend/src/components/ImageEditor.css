@@ -1,0 +1,85 @@
+/* ImageEditor CSS Customizations */
+/* Fixes for popup size and button positioning */
+
+/* Make slider wider */
+.FIE_tool-options-wrapper {
+  min-width: 300px !important;
+}
+
+/* Make brightness/contrast/etc sliders wider */
+.FIE_brightness-option-wrapper,
+.FIE_contrast-option-wrapper,
+.FIE_saturation-option-wrapper,
+.FIE_warmth-option-wrapper,
+.FIE_exposure-option-wrapper,
+.FIE_hue-option-wrapper,
+[class*="-option-wrapper"] {
+  min-width: 280px !important;
+}
+
+/* Make the slider input wider */
+.SfxSlider-root {
+  min-width: 200px !important;
+}
+
+/* Ensure tools bar has enough space */
+.FIE_tools-bar-wrapper {
+  min-height: 120px !important;
+  padding-bottom: 16px !important;
+}
+
+/* Make the editor fill the container properly */
+.FIE_root {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 100vh !important;
+}
+
+/* Main container should fill available space */
+.FIE_main-container {
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Editor content should be scrollable if needed */
+.FIE_editor-content {
+  flex: 1 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: auto !important;
+}
+
+/* Canvas wrapper should not overflow */
+.FIE_canvas-container {
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Ensure filter thumbnails are visible */
+.FIE_filters-item {
+  min-width: 60px !important;
+  min-height: 60px !important;
+}
+
+/* Better spacing for tool buttons */
+.FIE_tools-bar {
+  gap: 8px !important;
+}
+
+/* Make sure popups/popovers have enough width */
+[class*="SfxPopper"] {
+  min-width: 200px !important;
+}
+
+/* Prevent content from being cut off */
+.FIE_topbar {
+  flex-shrink: 0 !important;
+}
+
+.FIE_tabs {
+  flex-shrink: 0 !important;
+}

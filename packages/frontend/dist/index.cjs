@@ -24,6 +24,12 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
+// src/components/ImageEditor.css
+var init_ImageEditor = __esm({
+  "src/components/ImageEditor.css"() {
+  }
+});
+
 // src/components/ImageEditor.tsx
 var ImageEditor_exports = {};
 __export(ImageEditor_exports, {
@@ -123,8 +129,9 @@ function ImageEditor({
     }
   ) });
 }
-var init_ImageEditor = __esm({
+var init_ImageEditor2 = __esm({
   "src/components/ImageEditor.tsx"() {
+    init_ImageEditor();
   }
 });
 var DEFAULT_OPTIONS = {
@@ -262,7 +269,7 @@ function ImageEditorLazy(props) {
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     window.React = React__default.default;
-    Promise.resolve().then(() => (init_ImageEditor(), ImageEditor_exports)).then((mod) => {
+    Promise.resolve().then(() => (init_ImageEditor2(), ImageEditor_exports)).then((mod) => {
       setEditorComponent(() => mod.ImageEditor);
       setLoading(false);
     }).catch((err) => {

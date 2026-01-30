@@ -1,0 +1,60 @@
+/* src/components/ImageEditor.css */
+.FIE_tool-options-wrapper {
+  min-width: 300px !important;
+}
+.FIE_brightness-option-wrapper,
+.FIE_contrast-option-wrapper,
+.FIE_saturation-option-wrapper,
+.FIE_warmth-option-wrapper,
+.FIE_exposure-option-wrapper,
+.FIE_hue-option-wrapper,
+[class*=-option-wrapper] {
+  min-width: 280px !important;
+}
+.SfxSlider-root {
+  min-width: 200px !important;
+}
+.FIE_tools-bar-wrapper {
+  min-height: 120px !important;
+  padding-bottom: 16px !important;
+}
+.FIE_root {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 100vh !important;
+}
+.FIE_main-container {
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+.FIE_editor-content {
+  flex: 1 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: auto !important;
+}
+.FIE_canvas-container {
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+.FIE_filters-item {
+  min-width: 60px !important;
+  min-height: 60px !important;
+}
+.FIE_tools-bar {
+  gap: 8px !important;
+}
+[class*=SfxPopper] {
+  min-width: 200px !important;
+}
+.FIE_topbar {
+  flex-shrink: 0 !important;
+}
+.FIE_tabs {
+  flex-shrink: 0 !important;
+}
+/*# sourceMappingURL=index.css.map */

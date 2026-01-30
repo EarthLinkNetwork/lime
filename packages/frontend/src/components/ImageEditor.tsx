@@ -1,5 +1,6 @@
 import FilerobotImageEditor, { TABS, TOOLS } from 'react-filerobot-image-editor';
 import type { ImageEditorProps } from '../types';
+import './ImageEditor.css';
 
 export function ImageEditor({
   src,
