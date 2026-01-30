@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { compressImage } from '../utils/imageCompression';
 import { ImageCropper } from './ImageCropper';
-import { ImageEditor } from './ImageEditor';
+import { ImageEditorLazy } from './ImageEditorLazy';
 import type { S3UploaderProps, PresignedUrlResponse } from '../types';
 
 type UploadStatus = 'idle' | 'compressing' | 'editing' | 'uploading' | 'success' | 'error';
@@ -236,10 +236,10 @@ export function S3Uploader({
     }
   }, []);
 
-  // Show full image editor if enabled
+  // Show full image editor if enabled (lazy loaded for Next.js compatibility)
   if (isEditorOpen && previewUrl && enableEditor) {
     return (
-      <ImageEditor
+      <ImageEditorLazy
         src={previewUrl}
         onSave={handleEditorSave}
         onClose={handleEditorClose}

@@ -1,143 +1,36 @@
 'use strict';
 
-var react = require('react');
+var FilerobotImageEditor = require('react-filerobot-image-editor');
+var jsxRuntime = require('react/jsx-runtime');
+var React = require('react');
 var imageCompression = require('browser-image-compression');
 var ReactCrop = require('react-image-crop');
 require('react-image-crop/dist/ReactCrop.css');
-var jsxRuntime = require('react/jsx-runtime');
-var FilerobotImageEditor = require('react-filerobot-image-editor');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
+var FilerobotImageEditor__default = /*#__PURE__*/_interopDefault(FilerobotImageEditor);
+var React__default = /*#__PURE__*/_interopDefault(React);
 var imageCompression__default = /*#__PURE__*/_interopDefault(imageCompression);
 var ReactCrop__default = /*#__PURE__*/_interopDefault(ReactCrop);
-var FilerobotImageEditor__default = /*#__PURE__*/_interopDefault(FilerobotImageEditor);
 
-var DEFAULT_OPTIONS = {
-  maxSizeMB: 2,
-  maxWidthOrHeight: 1920,
-  useWebWorker: true
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
 };
-var ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-async function compressImage(file, options = {}) {
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error("Invalid file type. Allowed types: JPEG, PNG, GIF, WebP");
-  }
-  const mergedOptions = { ...DEFAULT_OPTIONS, ...options };
-  const maxSizeBytes = (mergedOptions.maxSizeMB || 2) * 1024 * 1024;
-  if (file.size <= maxSizeBytes) {
-    return file;
-  }
-  const compressedFile = await imageCompression__default.default(file, {
-    maxSizeMB: mergedOptions.maxSizeMB,
-    maxWidthOrHeight: mergedOptions.maxWidthOrHeight,
-    useWebWorker: mergedOptions.useWebWorker
-  });
-  return compressedFile;
-}
-function ImageCropper({
-  src,
-  onCropComplete,
-  onCancel,
-  aspectRatio
-}) {
-  const [crop, setCrop] = react.useState({
-    unit: "%",
-    x: 10,
-    y: 10,
-    width: 80,
-    height: 80
-  });
-  const [completedCrop, setCompletedCrop] = react.useState(null);
-  const imgRef = react.useRef(null);
-  const handleCropChange = react.useCallback((c) => {
-    setCrop(c);
-  }, []);
-  const handleCropComplete = react.useCallback((c) => {
-    setCompletedCrop(c);
-  }, []);
-  const getCroppedImage = react.useCallback(async () => {
-    if (!completedCrop || !imgRef.current) {
-      return null;
-    }
-    const image = imgRef.current;
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      return null;
-    }
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
-    canvas.width = completedCrop.width;
-    canvas.height = completedCrop.height;
-    ctx.drawImage(
-      image,
-      completedCrop.x * scaleX,
-      completedCrop.y * scaleY,
-      completedCrop.width * scaleX,
-      completedCrop.height * scaleY,
-      0,
-      0,
-      completedCrop.width,
-      completedCrop.height
-    );
-    return new Promise((resolve) => {
-      canvas.toBlob(
-        (blob) => {
-          resolve(blob);
-        },
-        "image/jpeg",
-        0.95
-      );
-    });
-  }, [completedCrop]);
-  const handleConfirm = react.useCallback(async () => {
-    const croppedBlob = await getCroppedImage();
-    if (croppedBlob) {
-      onCropComplete(croppedBlob);
-    }
-  }, [getCroppedImage, onCropComplete]);
-  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "image-cropper", children: [
-    /* @__PURE__ */ jsxRuntime.jsx("div", { className: "image-cropper__container", children: /* @__PURE__ */ jsxRuntime.jsx(
-      ReactCrop__default.default,
-      {
-        crop,
-        onChange: handleCropChange,
-        onComplete: handleCropComplete,
-        aspect: aspectRatio,
-        children: /* @__PURE__ */ jsxRuntime.jsx(
-          "img",
-          {
-            ref: imgRef,
-            src,
-            alt: "Crop preview",
-            style: { maxWidth: "100%", maxHeight: "70vh" }
-          }
-        )
-      }
-    ) }),
-    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "image-cropper__actions", children: [
-      /* @__PURE__ */ jsxRuntime.jsx(
-        "button",
-        {
-          type: "button",
-          onClick: onCancel,
-          className: "image-cropper__button image-cropper__button--cancel",
-          children: "Cancel"
-        }
-      ),
-      /* @__PURE__ */ jsxRuntime.jsx(
-        "button",
-        {
-          type: "button",
-          onClick: handleConfirm,
-          className: "image-cropper__button image-cropper__button--confirm",
-          children: "Crop"
-        }
-      )
-    ] })
-  ] });
-}
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// src/components/ImageEditor.tsx
+var ImageEditor_exports = {};
+__export(ImageEditor_exports, {
+  ImageEditor: () => ImageEditor,
+  TABS: () => FilerobotImageEditor.TABS,
+  TOOLS: () => FilerobotImageEditor.TOOLS
+});
 function ImageEditor({
   src,
   onSave,
@@ -230,6 +123,202 @@ function ImageEditor({
     }
   ) });
 }
+var init_ImageEditor = __esm({
+  "src/components/ImageEditor.tsx"() {
+  }
+});
+var DEFAULT_OPTIONS = {
+  maxSizeMB: 2,
+  maxWidthOrHeight: 1920,
+  useWebWorker: true
+};
+var ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+async function compressImage(file, options = {}) {
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    throw new Error("Invalid file type. Allowed types: JPEG, PNG, GIF, WebP");
+  }
+  const mergedOptions = { ...DEFAULT_OPTIONS, ...options };
+  const maxSizeBytes = (mergedOptions.maxSizeMB || 2) * 1024 * 1024;
+  if (file.size <= maxSizeBytes) {
+    return file;
+  }
+  const compressedFile = await imageCompression__default.default(file, {
+    maxSizeMB: mergedOptions.maxSizeMB,
+    maxWidthOrHeight: mergedOptions.maxWidthOrHeight,
+    useWebWorker: mergedOptions.useWebWorker
+  });
+  return compressedFile;
+}
+function ImageCropper({
+  src,
+  onCropComplete,
+  onCancel,
+  aspectRatio
+}) {
+  const [crop, setCrop] = React.useState({
+    unit: "%",
+    x: 10,
+    y: 10,
+    width: 80,
+    height: 80
+  });
+  const [completedCrop, setCompletedCrop] = React.useState(null);
+  const imgRef = React.useRef(null);
+  const handleCropChange = React.useCallback((c) => {
+    setCrop(c);
+  }, []);
+  const handleCropComplete = React.useCallback((c) => {
+    setCompletedCrop(c);
+  }, []);
+  const getCroppedImage = React.useCallback(async () => {
+    if (!completedCrop || !imgRef.current) {
+      return null;
+    }
+    const image = imgRef.current;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return null;
+    }
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    canvas.width = completedCrop.width;
+    canvas.height = completedCrop.height;
+    ctx.drawImage(
+      image,
+      completedCrop.x * scaleX,
+      completedCrop.y * scaleY,
+      completedCrop.width * scaleX,
+      completedCrop.height * scaleY,
+      0,
+      0,
+      completedCrop.width,
+      completedCrop.height
+    );
+    return new Promise((resolve) => {
+      canvas.toBlob(
+        (blob) => {
+          resolve(blob);
+        },
+        "image/jpeg",
+        0.95
+      );
+    });
+  }, [completedCrop]);
+  const handleConfirm = React.useCallback(async () => {
+    const croppedBlob = await getCroppedImage();
+    if (croppedBlob) {
+      onCropComplete(croppedBlob);
+    }
+  }, [getCroppedImage, onCropComplete]);
+  return /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "image-cropper", children: [
+    /* @__PURE__ */ jsxRuntime.jsx("div", { className: "image-cropper__container", children: /* @__PURE__ */ jsxRuntime.jsx(
+      ReactCrop__default.default,
+      {
+        crop,
+        onChange: handleCropChange,
+        onComplete: handleCropComplete,
+        aspect: aspectRatio,
+        children: /* @__PURE__ */ jsxRuntime.jsx(
+          "img",
+          {
+            ref: imgRef,
+            src,
+            alt: "Crop preview",
+            style: { maxWidth: "100%", maxHeight: "70vh" }
+          }
+        )
+      }
+    ) }),
+    /* @__PURE__ */ jsxRuntime.jsxs("div", { className: "image-cropper__actions", children: [
+      /* @__PURE__ */ jsxRuntime.jsx(
+        "button",
+        {
+          type: "button",
+          onClick: onCancel,
+          className: "image-cropper__button image-cropper__button--cancel",
+          children: "Cancel"
+        }
+      ),
+      /* @__PURE__ */ jsxRuntime.jsx(
+        "button",
+        {
+          type: "button",
+          onClick: handleConfirm,
+          className: "image-cropper__button image-cropper__button--confirm",
+          children: "Crop"
+        }
+      )
+    ] })
+  ] });
+}
+if (typeof window !== "undefined") {
+  window.React = React__default.default;
+}
+function ImageEditorLazy(props) {
+  const [EditorComponent, setEditorComponent] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.React = React__default.default;
+    Promise.resolve().then(() => (init_ImageEditor(), ImageEditor_exports)).then((mod) => {
+      setEditorComponent(() => mod.ImageEditor);
+      setLoading(false);
+    }).catch((err) => {
+      console.error("Failed to load ImageEditor:", err);
+      setError("Failed to load image editor");
+      setLoading(false);
+    });
+  }, []);
+  if (loading) {
+    return /* @__PURE__ */ jsxRuntime.jsx("div", { style: {
+      height: "100vh",
+      width: "100%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#1a1a1a",
+      color: "#fff"
+    }, children: /* @__PURE__ */ jsxRuntime.jsxs("div", { style: { textAlign: "center" }, children: [
+      /* @__PURE__ */ jsxRuntime.jsx("div", { style: {
+        width: "40px",
+        height: "40px",
+        border: "3px solid #333",
+        borderTopColor: "#fff",
+        borderRadius: "50%",
+        animation: "spin 1s linear infinite",
+        margin: "0 auto 16px"
+      } }),
+      /* @__PURE__ */ jsxRuntime.jsx("style", { children: `@keyframes spin { to { transform: rotate(360deg); } }` }),
+      /* @__PURE__ */ jsxRuntime.jsx("p", { children: "Loading editor..." })
+    ] }) });
+  }
+  if (error || !EditorComponent) {
+    return /* @__PURE__ */ jsxRuntime.jsxs("div", { style: {
+      padding: "20px",
+      textAlign: "center",
+      backgroundColor: "#fee",
+      color: "#c00",
+      borderRadius: "8px"
+    }, children: [
+      /* @__PURE__ */ jsxRuntime.jsx("p", { children: error || "Failed to load editor" }),
+      /* @__PURE__ */ jsxRuntime.jsx(
+        "button",
+        {
+          onClick: props.onClose,
+          style: {
+            marginTop: "10px",
+            padding: "8px 16px",
+            cursor: "pointer"
+          },
+          children: "Close"
+        }
+      )
+    ] });
+  }
+  return /* @__PURE__ */ jsxRuntime.jsx(EditorComponent, { ...props });
+}
 function S3Uploader({
   apiEndpoint,
   apiKey,
@@ -251,15 +340,15 @@ function S3Uploader({
   editorConfig
 }) {
   const editorEnabled = enableEditor || enableCrop;
-  const [selectedFile, setSelectedFile] = react.useState(null);
-  const [previewUrl, setPreviewUrl] = react.useState(null);
-  const [status, setStatus] = react.useState("idle");
-  const [progress, setProgress] = react.useState(0);
-  const [errorMessage, setErrorMessage] = react.useState(null);
-  const [isEditorOpen, setIsEditorOpen] = react.useState(false);
-  const [isDragOver, setIsDragOver] = react.useState(false);
-  const fileInputRef = react.useRef(null);
-  const processFile = react.useCallback(
+  const [selectedFile, setSelectedFile] = React.useState(null);
+  const [previewUrl, setPreviewUrl] = React.useState(null);
+  const [status, setStatus] = React.useState("idle");
+  const [progress, setProgress] = React.useState(0);
+  const [errorMessage, setErrorMessage] = React.useState(null);
+  const [isEditorOpen, setIsEditorOpen] = React.useState(false);
+  const [isDragOver, setIsDragOver] = React.useState(false);
+  const fileInputRef = React.useRef(null);
+  const processFile = React.useCallback(
     (file) => {
       if (!allowedFileTypes.includes(file.type)) {
         setErrorMessage(`Invalid file type. Allowed: ${allowedFileTypes.join(", ")}`);
@@ -279,7 +368,7 @@ function S3Uploader({
     },
     [allowedFileTypes, maxFileSizeMB, editorEnabled]
   );
-  const handleFileSelect = react.useCallback(
+  const handleFileSelect = React.useCallback(
     async (event) => {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -287,17 +376,17 @@ function S3Uploader({
     },
     [processFile]
   );
-  const handleDragOver = react.useCallback((event) => {
+  const handleDragOver = React.useCallback((event) => {
     event.preventDefault();
     event.stopPropagation();
     setIsDragOver(true);
   }, []);
-  const handleDragLeave = react.useCallback((event) => {
+  const handleDragLeave = React.useCallback((event) => {
     event.preventDefault();
     event.stopPropagation();
     setIsDragOver(false);
   }, []);
-  const handleDrop = react.useCallback(
+  const handleDrop = React.useCallback(
     (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -308,7 +397,7 @@ function S3Uploader({
     },
     [processFile]
   );
-  const handleEditorSave = react.useCallback((blob, fileName) => {
+  const handleEditorSave = React.useCallback((blob, fileName) => {
     const editedFile = new File([blob], fileName || selectedFile?.name || "edited.jpg", {
       type: blob.type || "image/jpeg"
     });
@@ -316,13 +405,13 @@ function S3Uploader({
     setPreviewUrl(URL.createObjectURL(blob));
     setIsEditorOpen(false);
   }, [selectedFile]);
-  const handleEditorClose = react.useCallback(() => {
+  const handleEditorClose = React.useCallback(() => {
     setIsEditorOpen(false);
   }, []);
-  const handleCropComplete = react.useCallback((croppedBlob) => {
+  const handleCropComplete = React.useCallback((croppedBlob) => {
     handleEditorSave(croppedBlob, selectedFile?.name || "cropped.jpg");
   }, [handleEditorSave, selectedFile]);
-  const handleCropCancel = react.useCallback(() => {
+  const handleCropCancel = React.useCallback(() => {
     setIsEditorOpen(false);
   }, []);
   const getPresignedUrl = async (fileName, contentType) => {
@@ -363,7 +452,7 @@ function S3Uploader({
       throw new Error(`Upload failed: ${response.status}`);
     }
   };
-  const handleUpload = react.useCallback(async () => {
+  const handleUpload = React.useCallback(async () => {
     if (!selectedFile) return;
     try {
       setStatus("compressing");
@@ -405,7 +494,7 @@ function S3Uploader({
     onUploadError,
     onProgress
   ]);
-  const handleReset = react.useCallback(() => {
+  const handleReset = React.useCallback(() => {
     setSelectedFile(null);
     setPreviewUrl(null);
     setStatus("idle");
@@ -418,7 +507,7 @@ function S3Uploader({
   }, []);
   if (isEditorOpen && previewUrl && enableEditor) {
     return /* @__PURE__ */ jsxRuntime.jsx(
-      ImageEditor,
+      ImageEditorLazy,
       {
         src: previewUrl,
         onSave: handleEditorSave,
@@ -597,7 +686,7 @@ Object.defineProperty(exports, "TOOLS", {
   get: function () { return FilerobotImageEditor.TOOLS; }
 });
 exports.ImageCropper = ImageCropper;
-exports.ImageEditor = ImageEditor;
+exports.ImageEditor = ImageEditorLazy;
 exports.S3Uploader = S3Uploader;
 exports.compressImage = compressImage;
 exports.deleteObject = deleteObject;

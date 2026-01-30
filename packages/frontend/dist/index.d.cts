@@ -114,7 +114,7 @@ interface ImageCropperProps {
 }
 declare function ImageCropper({ src, onCropComplete, onCancel, aspectRatio, }: ImageCropperProps): react_jsx_runtime.JSX.Element;
 
-declare function ImageEditor({ src, onSave, onClose, defaultTab, enabledTabs, cropPresets, aspectRatioLocked, defaultAspectRatio, }: ImageEditorProps): react_jsx_runtime.JSX.Element;
+declare function ImageEditorLazy(props: ImageEditorProps): react_jsx_runtime.JSX.Element;
 
 interface CompressionOptions {
     maxSizeMB?: number;
@@ -131,4 +131,4 @@ interface DeleteObjectParams {
 declare function deleteObject(params: DeleteObjectParams): Promise<DeleteObjectResponse>;
 declare function listObjects(params: ListObjectsParams): Promise<ListObjectsResponse>;
 
-export { type CompressionOptions$1 as CompressionOptions, type CropPreset, type DeleteObjectResponse, ImageCropper, type ImageCropperProps$1 as ImageCropperProps, ImageEditor, type ImageEditorProps, type ImageEditorTab, type ListObjectsParams, type ListObjectsResponse, type ObjectInfo, S3Uploader, type S3UploaderProps, compressImage, deleteObject, listObjects };
+export { type CompressionOptions$1 as CompressionOptions, type CropPreset, type DeleteObjectResponse, ImageCropper, type ImageCropperProps$1 as ImageCropperProps, ImageEditorLazy as ImageEditor, type ImageEditorProps, type ImageEditorTab, type ListObjectsParams, type ListObjectsResponse, type ObjectInfo, S3Uploader, type S3UploaderProps, compressImage, deleteObject, listObjects };

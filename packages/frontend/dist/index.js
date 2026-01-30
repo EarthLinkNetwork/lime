@@ -1,11 +1,124 @@
-import { useState, useRef, useCallback } from 'react';
+import FilerobotImageEditor, { TOOLS, TABS } from 'react-filerobot-image-editor';
+export { TABS, TOOLS } from 'react-filerobot-image-editor';
+import { jsx, jsxs } from 'react/jsx-runtime';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import imageCompression from 'browser-image-compression';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import { jsxs, jsx } from 'react/jsx-runtime';
-import FilerobotImageEditor, { TABS, TOOLS } from 'react-filerobot-image-editor';
-export { TABS, TOOLS } from 'react-filerobot-image-editor';
 
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// src/components/ImageEditor.tsx
+var ImageEditor_exports = {};
+__export(ImageEditor_exports, {
+  ImageEditor: () => ImageEditor,
+  TABS: () => TABS,
+  TOOLS: () => TOOLS
+});
+function ImageEditor({
+  src,
+  onSave,
+  onClose,
+  defaultTab = "Adjust",
+  enabledTabs = ["Adjust", "Filters", "Finetune", "Resize", "Annotate"],
+  cropPresets,
+  aspectRatioLocked = false,
+  defaultAspectRatio
+}) {
+  const tabsIds = enabledTabs.map((tab) => {
+    switch (tab) {
+      case "Adjust":
+        return TABS.ADJUST;
+      case "Filters":
+        return TABS.FILTERS;
+      case "Finetune":
+        return TABS.FINETUNE;
+      case "Resize":
+        return TABS.RESIZE;
+      case "Annotate":
+        return TABS.ANNOTATE;
+      case "Watermark":
+        return TABS.WATERMARK;
+      default:
+        return TABS.ADJUST;
+    }
+  });
+  const defaultTabId = (() => {
+    switch (defaultTab) {
+      case "Adjust":
+        return TABS.ADJUST;
+      case "Filters":
+        return TABS.FILTERS;
+      case "Finetune":
+        return TABS.FINETUNE;
+      case "Resize":
+        return TABS.RESIZE;
+      case "Annotate":
+        return TABS.ANNOTATE;
+      case "Watermark":
+        return TABS.WATERMARK;
+      default:
+        return TABS.ADJUST;
+    }
+  })();
+  const handleSave = (editedImageObject) => {
+    if (!editedImageObject.imageBase64) return;
+    const base64Data = editedImageObject.imageBase64.split(",")[1];
+    const mimeType = editedImageObject.mimeType || "image/jpeg";
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+    onSave(blob, editedImageObject.fullName || "edited-image");
+  };
+  const cropConfig = {
+    autoResize: true
+  };
+  if (aspectRatioLocked && defaultAspectRatio) {
+    cropConfig.ratio = defaultAspectRatio;
+    cropConfig.noPresets = true;
+  } else if (cropPresets && cropPresets.length > 0) {
+    cropConfig.presetsItems = cropPresets.map((preset) => ({
+      titleKey: preset.label,
+      ratio: preset.ratio,
+      width: preset.width,
+      height: preset.height
+    }));
+  }
+  return /* @__PURE__ */ jsx("div", { className: "image-editor", style: { height: "100vh", width: "100%" }, children: /* @__PURE__ */ jsx(
+    FilerobotImageEditor,
+    {
+      source: src,
+      onSave: handleSave,
+      onClose,
+      tabsIds,
+      defaultTabId,
+      defaultToolId: TOOLS.CROP,
+      savingPixelRatio: 4,
+      previewPixelRatio: window.devicePixelRatio,
+      Crop: cropConfig,
+      Rotate: {
+        componentType: "slider"
+      },
+      Text: { text: "" }
+    }
+  ) });
+}
+var init_ImageEditor = __esm({
+  "src/components/ImageEditor.tsx"() {
+  }
+});
 var DEFAULT_OPTIONS = {
   maxSizeMB: 2,
   maxWidthOrHeight: 1920,
@@ -131,97 +244,72 @@ function ImageCropper({
     ] })
   ] });
 }
-function ImageEditor({
-  src,
-  onSave,
-  onClose,
-  defaultTab = "Adjust",
-  enabledTabs = ["Adjust", "Filters", "Finetune", "Resize", "Annotate"],
-  cropPresets,
-  aspectRatioLocked = false,
-  defaultAspectRatio
-}) {
-  const tabsIds = enabledTabs.map((tab) => {
-    switch (tab) {
-      case "Adjust":
-        return TABS.ADJUST;
-      case "Filters":
-        return TABS.FILTERS;
-      case "Finetune":
-        return TABS.FINETUNE;
-      case "Resize":
-        return TABS.RESIZE;
-      case "Annotate":
-        return TABS.ANNOTATE;
-      case "Watermark":
-        return TABS.WATERMARK;
-      default:
-        return TABS.ADJUST;
-    }
-  });
-  const defaultTabId = (() => {
-    switch (defaultTab) {
-      case "Adjust":
-        return TABS.ADJUST;
-      case "Filters":
-        return TABS.FILTERS;
-      case "Finetune":
-        return TABS.FINETUNE;
-      case "Resize":
-        return TABS.RESIZE;
-      case "Annotate":
-        return TABS.ANNOTATE;
-      case "Watermark":
-        return TABS.WATERMARK;
-      default:
-        return TABS.ADJUST;
-    }
-  })();
-  const handleSave = (editedImageObject) => {
-    if (!editedImageObject.imageBase64) return;
-    const base64Data = editedImageObject.imageBase64.split(",")[1];
-    const mimeType = editedImageObject.mimeType || "image/jpeg";
-    const byteCharacters = atob(base64Data);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: mimeType });
-    onSave(blob, editedImageObject.fullName || "edited-image");
-  };
-  const cropConfig = {
-    autoResize: true
-  };
-  if (aspectRatioLocked && defaultAspectRatio) {
-    cropConfig.ratio = defaultAspectRatio;
-    cropConfig.noPresets = true;
-  } else if (cropPresets && cropPresets.length > 0) {
-    cropConfig.presetsItems = cropPresets.map((preset) => ({
-      titleKey: preset.label,
-      ratio: preset.ratio,
-      width: preset.width,
-      height: preset.height
-    }));
+if (typeof window !== "undefined") {
+  window.React = React;
+}
+function ImageEditorLazy(props) {
+  const [EditorComponent, setEditorComponent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.React = React;
+    Promise.resolve().then(() => (init_ImageEditor(), ImageEditor_exports)).then((mod) => {
+      setEditorComponent(() => mod.ImageEditor);
+      setLoading(false);
+    }).catch((err) => {
+      console.error("Failed to load ImageEditor:", err);
+      setError("Failed to load image editor");
+      setLoading(false);
+    });
+  }, []);
+  if (loading) {
+    return /* @__PURE__ */ jsx("div", { style: {
+      height: "100vh",
+      width: "100%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#1a1a1a",
+      color: "#fff"
+    }, children: /* @__PURE__ */ jsxs("div", { style: { textAlign: "center" }, children: [
+      /* @__PURE__ */ jsx("div", { style: {
+        width: "40px",
+        height: "40px",
+        border: "3px solid #333",
+        borderTopColor: "#fff",
+        borderRadius: "50%",
+        animation: "spin 1s linear infinite",
+        margin: "0 auto 16px"
+      } }),
+      /* @__PURE__ */ jsx("style", { children: `@keyframes spin { to { transform: rotate(360deg); } }` }),
+      /* @__PURE__ */ jsx("p", { children: "Loading editor..." })
+    ] }) });
   }
-  return /* @__PURE__ */ jsx("div", { className: "image-editor", style: { height: "100vh", width: "100%" }, children: /* @__PURE__ */ jsx(
-    FilerobotImageEditor,
-    {
-      source: src,
-      onSave: handleSave,
-      onClose,
-      tabsIds,
-      defaultTabId,
-      defaultToolId: TOOLS.CROP,
-      savingPixelRatio: 4,
-      previewPixelRatio: window.devicePixelRatio,
-      Crop: cropConfig,
-      Rotate: {
-        componentType: "slider"
-      },
-      Text: { text: "" }
-    }
-  ) });
+  if (error || !EditorComponent) {
+    return /* @__PURE__ */ jsxs("div", { style: {
+      padding: "20px",
+      textAlign: "center",
+      backgroundColor: "#fee",
+      color: "#c00",
+      borderRadius: "8px"
+    }, children: [
+      /* @__PURE__ */ jsx("p", { children: error || "Failed to load editor" }),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          onClick: props.onClose,
+          style: {
+            marginTop: "10px",
+            padding: "8px 16px",
+            cursor: "pointer"
+          },
+          children: "Close"
+        }
+      )
+    ] });
+  }
+  return /* @__PURE__ */ jsx(EditorComponent, { ...props });
 }
 function S3Uploader({
   apiEndpoint,
@@ -411,7 +499,7 @@ function S3Uploader({
   }, []);
   if (isEditorOpen && previewUrl && enableEditor) {
     return /* @__PURE__ */ jsx(
-      ImageEditor,
+      ImageEditorLazy,
       {
         src: previewUrl,
         onSave: handleEditorSave,
@@ -581,6 +669,6 @@ async function listObjects(params) {
   return response.json();
 }
 
-export { ImageCropper, ImageEditor, S3Uploader, compressImage, deleteObject, listObjects };
+export { ImageCropper, ImageEditorLazy as ImageEditor, S3Uploader, compressImage, deleteObject, listObjects };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map
