@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import FilerobotImageEditor, { TABS, TOOLS } from 'react-filerobot-image-editor';
 import type { ImageEditorProps } from '../types';
 
@@ -13,24 +11,6 @@ export function ImageEditor({
   aspectRatioLocked = false,
   defaultAspectRatio,
 }: ImageEditorProps) {
-  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
-
-  useEffect(() => {
-    // Create a dedicated portal container to avoid conflicts
-    const container = document.createElement('div');
-    container.id = 'lime-image-editor-portal';
-    container.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999;';
-    document.body.appendChild(container);
-    setPortalContainer(container);
-
-    // Cleanup on unmount
-    return () => {
-      if (container.parentNode) {
-        container.parentNode.removeChild(container);
-      }
-    };
-  }, []);
-
   // Map string tab names to TABS enum
   const tabsIds = enabledTabs.map((tab) => {
     switch (tab) {
@@ -104,70 +84,25 @@ export function ImageEditor({
     }));
   }
 
-  // Wait for portal container to be ready
-  if (!portalContainer) {
-    return null;
-  }
-
-  // Handle backdrop click - only close if clicking directly on backdrop
-  // react-filerobot-image-editor uses portals for dropdowns, so we can't rely on stopPropagation
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Only close if the click target is the backdrop itself, not any child elements
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
-  const editorContent = (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      }}
-      onClick={handleBackdropClick}
-    >
-      {/* Editor modal */}
-      <div
-        className="image-editor-modal"
-        style={{
-          width: '90vw',
-          height: '90vh',
-          maxWidth: '1400px',
-          maxHeight: '900px',
-          backgroundColor: '#1a1a1a',
-          borderRadius: '12px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+  return (
+    <div className="image-editor" style={{ height: '100vh', width: '100%' }}>
+      <FilerobotImageEditor
+        source={src}
+        onSave={handleSave}
+        onClose={onClose}
+        tabsIds={tabsIds}
+        defaultTabId={defaultTabId}
+        defaultToolId={TOOLS.CROP}
+        savingPixelRatio={4}
+        previewPixelRatio={window.devicePixelRatio}
+        Crop={cropConfig}
+        Rotate={{
+          componentType: 'slider',
         }}
-        onClick={(e) => e.stopPropagation()} // Extra safety to prevent any bubble-through
-      >
-        <FilerobotImageEditor
-          source={src}
-          onSave={handleSave}
-          onClose={onClose}
-          tabsIds={tabsIds}
-          defaultTabId={defaultTabId}
-          defaultToolId={TOOLS.CROP}
-          savingPixelRatio={4}
-          previewPixelRatio={window.devicePixelRatio}
-          Crop={cropConfig}
-          Rotate={{
-            componentType: 'slider',
-          }}
-          Text={{ text: '' }}
-        />
-      </div>
+        Text={{ text: '' }}
+      />
     </div>
   );
-
-  // Use portal to render outside of any parent transform context
-  return createPortal(editorContent, portalContainer);
 }
 
 export { TABS, TOOLS };
