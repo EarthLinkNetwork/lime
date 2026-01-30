@@ -1,16 +1,17 @@
 'use strict';
 
+var React = require('react');
+var reactDom = require('react-dom');
 var FilerobotImageEditor = require('react-filerobot-image-editor');
 var jsxRuntime = require('react/jsx-runtime');
-var React = require('react');
 var imageCompression = require('browser-image-compression');
 var ReactCrop = require('react-image-crop');
 require('react-image-crop/dist/ReactCrop.css');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
-var FilerobotImageEditor__default = /*#__PURE__*/_interopDefault(FilerobotImageEditor);
 var React__default = /*#__PURE__*/_interopDefault(React);
+var FilerobotImageEditor__default = /*#__PURE__*/_interopDefault(FilerobotImageEditor);
 var imageCompression__default = /*#__PURE__*/_interopDefault(imageCompression);
 var ReactCrop__default = /*#__PURE__*/_interopDefault(ReactCrop);
 
@@ -41,6 +42,10 @@ function ImageEditor({
   aspectRatioLocked = false,
   defaultAspectRatio
 }) {
+  const [portalContainer, setPortalContainer] = React.useState(null);
+  React.useEffect(() => {
+    setPortalContainer(document.body);
+  }, []);
   const tabsIds = enabledTabs.map((tab) => {
     switch (tab) {
       case "Adjust":
@@ -104,7 +109,10 @@ function ImageEditor({
       height: preset.height
     }));
   }
-  return /* @__PURE__ */ jsxRuntime.jsx(
+  if (!portalContainer) {
+    return null;
+  }
+  const editorContent = /* @__PURE__ */ jsxRuntime.jsx(
     "div",
     {
       className: "image-editor-overlay",
@@ -112,8 +120,6 @@ function ImageEditor({
         position: "fixed",
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0,
         width: "100vw",
         height: "100vh",
         zIndex: 99999,
@@ -139,6 +145,7 @@ function ImageEditor({
       )
     }
   );
+  return reactDom.createPortal(editorContent, portalContainer);
 }
 var init_ImageEditor = __esm({
   "src/components/ImageEditor.tsx"() {

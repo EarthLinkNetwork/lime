@@ -1,7 +1,8 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import FilerobotImageEditor, { TOOLS, TABS } from 'react-filerobot-image-editor';
 export { TABS, TOOLS } from 'react-filerobot-image-editor';
 import { jsx, jsxs } from 'react/jsx-runtime';
-import React, { useState, useRef, useCallback, useEffect } from 'react';
 import imageCompression from 'browser-image-compression';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -33,6 +34,10 @@ function ImageEditor({
   aspectRatioLocked = false,
   defaultAspectRatio
 }) {
+  const [portalContainer, setPortalContainer] = useState(null);
+  useEffect(() => {
+    setPortalContainer(document.body);
+  }, []);
   const tabsIds = enabledTabs.map((tab) => {
     switch (tab) {
       case "Adjust":
@@ -96,7 +101,10 @@ function ImageEditor({
       height: preset.height
     }));
   }
-  return /* @__PURE__ */ jsx(
+  if (!portalContainer) {
+    return null;
+  }
+  const editorContent = /* @__PURE__ */ jsx(
     "div",
     {
       className: "image-editor-overlay",
@@ -104,8 +112,6 @@ function ImageEditor({
         position: "fixed",
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0,
         width: "100vw",
         height: "100vh",
         zIndex: 99999,
@@ -131,6 +137,7 @@ function ImageEditor({
       )
     }
   );
+  return createPortal(editorContent, portalContainer);
 }
 var init_ImageEditor = __esm({
   "src/components/ImageEditor.tsx"() {

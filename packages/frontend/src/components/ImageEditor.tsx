@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import FilerobotImageEditor, { TABS, TOOLS } from 'react-filerobot-image-editor';
 import type { ImageEditorProps } from '../types';
 
@@ -11,6 +13,13 @@ export function ImageEditor({
   aspectRatioLocked = false,
   defaultAspectRatio,
 }: ImageEditorProps) {
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    // Create portal container on mount
+    setPortalContainer(document.body);
+  }, []);
+
   // Map string tab names to TABS enum
   const tabsIds = enabledTabs.map((tab) => {
     switch (tab) {
@@ -84,15 +93,18 @@ export function ImageEditor({
     }));
   }
 
-  return (
+  // Wait for portal container to be ready
+  if (!portalContainer) {
+    return null;
+  }
+
+  const editorContent = (
     <div
       className="image-editor-overlay"
       style={{
         position: 'fixed',
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0,
         width: '100vw',
         height: '100vh',
         zIndex: 99999,
@@ -116,6 +128,9 @@ export function ImageEditor({
       />
     </div>
   );
+
+  // Use portal to render outside of any parent transform context
+  return createPortal(editorContent, portalContainer);
 }
 
 export { TABS, TOOLS };
