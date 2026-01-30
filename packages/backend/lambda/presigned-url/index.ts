@@ -16,6 +16,13 @@ interface RequestBody {
   tags?: Record<string, string>;
 }
 
+// CORS headers for all responses
+const corsHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Api-Key',
+};
+
 export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> => {
@@ -25,6 +32,7 @@ export const handler = async (
     if (!apiKey) {
       return {
         statusCode: 403,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Forbidden: API Key required' }),
       };
     }
@@ -34,6 +42,7 @@ export const handler = async (
     if (VALID_API_KEYS.length > 0 && !VALID_API_KEYS.includes(apiKey)) {
       return {
         statusCode: 403,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Forbidden: Invalid API Key' }),
       };
     }
@@ -42,6 +51,7 @@ export const handler = async (
     if (!event.body) {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Request body is required' }),
       };
     }
@@ -52,6 +62,7 @@ export const handler = async (
     if (!fileName || !contentType) {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'fileName and contentType are required' }),
       };
     }
@@ -59,6 +70,7 @@ export const handler = async (
     if (!projectCode || !ownerKey) {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'projectCode and ownerKey are required' }),
       };
     }
@@ -88,9 +100,7 @@ export const handler = async (
 
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: corsHeaders,
       body: JSON.stringify({
         uploadUrl,
         key,
@@ -101,6 +111,7 @@ export const handler = async (
     console.error('Error generating presigned URL:', error);
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'Internal server error' }),
     };
   }

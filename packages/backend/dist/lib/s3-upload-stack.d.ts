@@ -7,6 +7,8 @@ import { Construct } from 'constructs';
 export declare class S3UploadStack extends cdk.Stack {
     readonly bucket: s3.Bucket;
     readonly presignedUrlLambda: lambdaNodejs.NodejsFunction;
+    readonly deleteObjectLambda: lambdaNodejs.NodejsFunction;
+    readonly listObjectsLambda: lambdaNodejs.NodejsFunction;
     readonly imageResizeLambda: lambdaNodejs.NodejsFunction;
     readonly httpApi: apigatewayv2.HttpApi;
     readonly distribution: cloudfront.Distribution;

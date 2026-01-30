@@ -9,6 +9,13 @@ interface RequestBody {
   key: string;
 }
 
+// CORS headers for all responses
+const corsHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Api-Key',
+};
+
 export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> => {
@@ -18,6 +25,7 @@ export const handler = async (
     if (!apiKey) {
       return {
         statusCode: 403,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Forbidden: API Key required' }),
       };
     }
@@ -25,6 +33,7 @@ export const handler = async (
     if (VALID_API_KEYS.length > 0 && !VALID_API_KEYS.includes(apiKey)) {
       return {
         statusCode: 403,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Forbidden: Invalid API Key' }),
       };
     }
@@ -33,6 +42,7 @@ export const handler = async (
     if (!event.body) {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Request body is required' }),
       };
     }
@@ -43,6 +53,7 @@ export const handler = async (
     if (!key) {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'key is required' }),
       };
     }
@@ -52,6 +63,7 @@ export const handler = async (
     if (parts.length < 3) {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Invalid key format: must contain at least projectCode/ownerKey/file' }),
       };
     }
@@ -66,9 +78,7 @@ export const handler = async (
 
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: corsHeaders,
       body: JSON.stringify({
         deleted: true,
         key,
@@ -78,6 +88,7 @@ export const handler = async (
     console.error('Error deleting object:', error);
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'Internal server error' }),
     };
   }
