@@ -238,3 +238,124 @@ export { deleteObject } from './utils/api';
 export { listObjects } from './utils/api';
 export type { DeleteObjectResponse, ListObjectsResponse, ObjectInfo } from './types';
 ```
+
+---
+
+## 9. Image Editor 統合
+
+### 背景
+
+v1 の `ImageCropper` は react-image-crop ベースの簡易クロッパーのみ。
+v2 では Filerobot Image Editor を統合し、本格的な画像編集機能を提供する。
+
+### ライブラリ選定
+
+| ライブラリ | ライセンス | 機能 | 選定 |
+|-----------|----------|------|------|
+| react-filerobot-image-editor | MIT (無料) | クロップ、回転、フィルタ、リサイズ、アノテーション | 採用 |
+| Pintura | 有料 | カスタムフィルタ、より高機能 | 将来検討 |
+
+### 機能
+
+- **Adjust**: クロップ、回転、フリップ
+- **Filters**: Instagram風フィルタ（Sepia, Grayscale, etc.）
+- **Finetune**: 明るさ、コントラスト、彩度調整
+- **Resize**: サイズ変更
+- **Annotate**: テキスト、図形、ペン描画
+- **Watermark**: ウォーターマーク追加
+
+### コンポーネント
+
+#### ImageEditor
+
+```typescript
+import { ImageEditor } from '@earthlinknetwork/lime/packages/frontend/dist';
+
+<ImageEditor
+  src={imageUrl}
+  onSave={(blob, fileName) => handleSave(blob, fileName)}
+  onClose={() => setShowEditor(false)}
+  defaultTab="Adjust"
+  enabledTabs={['Adjust', 'Filters', 'Finetune', 'Resize']}
+  cropPresets={[
+    { label: '1:1', ratio: 1 },
+    { label: '16:9', ratio: 16/9 },
+    { label: '4:3', ratio: 4/3 },
+  ]}
+  aspectRatioLocked={false}
+/>
+```
+
+#### S3Uploader 統合
+
+```typescript
+<S3Uploader
+  // ... 既存props
+  enableEditor={true}              // ImageEditor を有効化
+  editorConfig={{
+    enabledTabs: ['Adjust', 'Filters', 'Resize'],
+    defaultTab: 'Adjust',
+    cropPresets: [{ label: '1:1', ratio: 1 }],
+  }}
+/>
+```
+
+### Props 変更
+
+```typescript
+export interface S3UploaderProps {
+  // ... 既存props
+
+  /** @deprecated Use enableEditor instead */
+  enableCrop?: boolean;
+
+  /** Enable full image editor (default: false) */
+  enableEditor?: boolean;
+
+  /** Image editor configuration */
+  editorConfig?: {
+    enabledTabs?: ImageEditorTab[];
+    defaultTab?: ImageEditorTab;
+    cropPresets?: CropPreset[];
+    aspectRatioLocked?: boolean;
+    defaultAspectRatio?: number;
+  };
+}
+
+export type ImageEditorTab = 'Adjust' | 'Filters' | 'Finetune' | 'Resize' | 'Annotate' | 'Watermark';
+
+export interface CropPreset {
+  label: string;
+  ratio?: number;
+  width?: number;
+  height?: number;
+}
+```
+
+### 新規エクスポート
+
+```typescript
+export { ImageEditor, TABS, TOOLS } from './components/ImageEditor';
+export type { ImageEditorProps, ImageEditorTab, CropPreset } from './types';
+```
+
+### 後方互換性
+
+- `enableCrop={true}` は引き続き動作（内部で `ImageCropper` を使用）
+- `enableEditor={true}` は新しい `ImageEditor` を使用
+- 両方指定時は `enableEditor` が優先
+
+### 依存関係
+
+```json
+{
+  "dependencies": {
+    "react-filerobot-image-editor": "^4.9.1",
+    "styled-components": "^6.3.8",
+    "konva": "^9.3.20",
+    "react-konva": "^18.2.14"
+  }
+}
+```
+
+Note: react-filerobot-image-editor v5 は React 19 が必要なため、React 18 互換の v4 を使用。

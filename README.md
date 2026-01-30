@@ -5,7 +5,8 @@ Universal S3 file upload utility with image processing for React applications.
 ## Features
 
 - **S3Uploader**: Drag-and-drop upload with progress tracking
-- **ImageCropper**: Interactive cropping with aspect ratio support
+- **ImageEditor**: Full-featured image editor (crop, rotate, filters, resize, annotate)
+- **ImageCropper**: Simple cropping with aspect ratio support (legacy)
 - **Image Compression**: Client-side compression (browser-image-compression)
 - **Dynamic Image Processing**: CloudFront + Lambda for on-the-fly resizing
 - **AWS CDK Backend**: Ready-to-deploy infrastructure
@@ -57,7 +58,7 @@ Note the outputs:
 ### 2. Use Frontend Components
 
 ```tsx
-import { S3Uploader, ImageCropper, compressImage, deleteObject, listObjects } from '@earthlinknetwork/lime/packages/frontend/dist';
+import { S3Uploader, ImageEditor, compressImage, deleteObject, listObjects } from '@earthlinknetwork/lime/packages/frontend/dist';
 
 function MyUploadPage() {
   return (
@@ -72,10 +73,18 @@ function MyUploadPage() {
       onUploadComplete={(url) => console.log('Uploaded:', url)}
       onUploadError={(error) => console.error('Failed:', error)}
       enableCompression={true}
-      enableCrop={false}
+      enableEditor={true}                      // Optional: full image editor
       enableDragDrop={true}                    // Optional: drag & drop (default: true)
       maxFileSizeMB={10}
       allowedFileTypes={['image/jpeg', 'image/png', 'image/webp']}
+      editorConfig={{                          // Optional: editor customization
+        enabledTabs: ['Adjust', 'Filters', 'Resize'],
+        defaultTab: 'Adjust',
+        cropPresets: [
+          { label: '1:1', ratio: 1 },
+          { label: '16:9', ratio: 16/9 },
+        ],
+      }}
     />
   );
 }
@@ -168,10 +177,12 @@ lime/
 │   ├── frontend/          # React components
 │   │   ├── src/
 │   │   │   ├── components/
-│   │   │   │   ├── S3Uploader.tsx
-│   │   │   │   └── ImageCropper.tsx
+│   │   │   │   ├── S3Uploader.tsx    # Main upload component
+│   │   │   │   ├── ImageEditor.tsx   # Full-featured image editor
+│   │   │   │   └── ImageCropper.tsx  # Simple cropper (legacy)
 │   │   │   └── utils/
-│   │   │       └── imageCompression.ts
+│   │   │       ├── imageCompression.ts
+│   │   │       └── api.ts            # deleteObject, listObjects
 │   │   └── dist/          # Built output
 │   │
 │   └── backend/           # AWS CDK infrastructure
@@ -203,13 +214,38 @@ lime/
 | `onUploadError` | `(error: Error) => void` | No | Error callback |
 | `onProgress` | `(progress: number) => void` | No | Progress callback (0-100) |
 | `enableCompression` | `boolean` | No | Enable compression (default: true) |
-| `enableCrop` | `boolean` | No | Enable cropping (default: false) |
+| `enableEditor` | `boolean` | No | Enable full image editor (default: false) |
+| `enableCrop` | `boolean` | No | Enable simple cropping - deprecated, use enableEditor |
 | `enableDragDrop` | `boolean` | No | Enable drag & drop (default: true) |
 | `maxFileSizeMB` | `number` | No | Max file size (default: 10) |
 | `allowedFileTypes` | `string[]` | No | Allowed MIME types |
 | `compressionOptions` | `CompressionOptions` | No | Compression settings |
+| `editorConfig` | `EditorConfig` | No | Image editor configuration |
 
-### ImageCropper Props
+### EditorConfig
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `enabledTabs` | `ImageEditorTab[]` | Tabs to show: 'Adjust', 'Filters', 'Finetune', 'Resize', 'Annotate', 'Watermark' |
+| `defaultTab` | `ImageEditorTab` | Default tab when editor opens |
+| `cropPresets` | `CropPreset[]` | Crop presets (e.g., `{ label: '1:1', ratio: 1 }`) |
+| `aspectRatioLocked` | `boolean` | Lock aspect ratio |
+| `defaultAspectRatio` | `number` | Default aspect ratio when locked |
+
+### ImageEditor Props
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `src` | `string` | Yes | Image source URL or base64 |
+| `onSave` | `(blob: Blob, fileName: string) => void` | Yes | Save callback |
+| `onClose` | `() => void` | Yes | Close callback |
+| `defaultTab` | `ImageEditorTab` | No | Default tab (default: 'Adjust') |
+| `enabledTabs` | `ImageEditorTab[]` | No | Tabs to show |
+| `cropPresets` | `CropPreset[]` | No | Crop presets |
+| `aspectRatioLocked` | `boolean` | No | Lock aspect ratio |
+| `defaultAspectRatio` | `number` | No | Default aspect ratio |
+
+### ImageCropper Props (Legacy)
 
 | Prop | Type | Required | Description |
 |------|------|----------|-------------|
