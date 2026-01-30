@@ -1,8 +1,5 @@
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import FilerobotImageEditor, { TABS, TOOLS } from 'react-filerobot-image-editor';
 import type { ImageEditorProps } from '../types';
-import './ImageEditor.css';
 
 export function ImageEditor({
   src,
@@ -14,17 +11,6 @@ export function ImageEditor({
   aspectRatioLocked = false,
   defaultAspectRatio,
 }: ImageEditorProps) {
-  const [mounted, setMounted] = useState(false);
-
-  // Ensure we only render in browser
-  useEffect(() => {
-    setMounted(true);
-    // Prevent body scroll when editor is open
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
   // Map string tab names to TABS enum
   const tabsIds = enabledTabs.map((tab) => {
     switch (tab) {
@@ -98,22 +84,8 @@ export function ImageEditor({
     }));
   }
 
-  // Editor content
-  const editorContent = (
-    <div
-      className="image-editor-overlay"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100vw',
-        height: '100vh',
-        zIndex: 99999,
-        backgroundColor: '#1a1a1a',
-      }}
-    >
+  return (
+    <div style={{ height: '100%', width: '100%' }}>
       <FilerobotImageEditor
         source={src}
         onSave={handleSave}
@@ -131,13 +103,6 @@ export function ImageEditor({
       />
     </div>
   );
-
-  // Use Portal to render outside parent container constraints
-  if (!mounted) {
-    return null;
-  }
-
-  return createPortal(editorContent, document.body);
 }
 
 export { TABS, TOOLS };

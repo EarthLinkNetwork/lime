@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import FilerobotImageEditor, { TOOLS, TABS } from 'react-filerobot-image-editor';
 export { TABS, TOOLS } from 'react-filerobot-image-editor';
 import { jsx, jsxs } from 'react/jsx-runtime';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import imageCompression from 'browser-image-compression';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -16,12 +15,6 @@ var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
-
-// src/components/ImageEditor.css
-var init_ImageEditor = __esm({
-  "src/components/ImageEditor.css"() {
-  }
-});
 
 // src/components/ImageEditor.tsx
 var ImageEditor_exports = {};
@@ -40,14 +33,6 @@ function ImageEditor({
   aspectRatioLocked = false,
   defaultAspectRatio
 }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, []);
   const tabsIds = enabledTabs.map((tab) => {
     switch (tab) {
       case "Adjust":
@@ -111,49 +96,27 @@ function ImageEditor({
       height: preset.height
     }));
   }
-  const editorContent = /* @__PURE__ */ jsx(
-    "div",
+  return /* @__PURE__ */ jsx("div", { style: { height: "100%", width: "100%" }, children: /* @__PURE__ */ jsx(
+    FilerobotImageEditor,
     {
-      className: "image-editor-overlay",
-      style: {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: "100vw",
-        height: "100vh",
-        zIndex: 99999,
-        backgroundColor: "#1a1a1a"
+      source: src,
+      onSave: handleSave,
+      onClose,
+      tabsIds,
+      defaultTabId,
+      defaultToolId: TOOLS.CROP,
+      savingPixelRatio: 4,
+      previewPixelRatio: window.devicePixelRatio,
+      Crop: cropConfig,
+      Rotate: {
+        componentType: "slider"
       },
-      children: /* @__PURE__ */ jsx(
-        FilerobotImageEditor,
-        {
-          source: src,
-          onSave: handleSave,
-          onClose,
-          tabsIds,
-          defaultTabId,
-          defaultToolId: TOOLS.CROP,
-          savingPixelRatio: 4,
-          previewPixelRatio: window.devicePixelRatio,
-          Crop: cropConfig,
-          Rotate: {
-            componentType: "slider"
-          },
-          Text: { text: "" }
-        }
-      )
+      Text: { text: "" }
     }
-  );
-  if (!mounted) {
-    return null;
-  }
-  return createPortal(editorContent, document.body);
+  ) });
 }
-var init_ImageEditor2 = __esm({
+var init_ImageEditor = __esm({
   "src/components/ImageEditor.tsx"() {
-    init_ImageEditor();
   }
 });
 var DEFAULT_OPTIONS = {
@@ -291,7 +254,7 @@ function ImageEditorLazy(props) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.React = React;
-    Promise.resolve().then(() => (init_ImageEditor2(), ImageEditor_exports)).then((mod) => {
+    Promise.resolve().then(() => (init_ImageEditor(), ImageEditor_exports)).then((mod) => {
       setEditorComponent(() => mod.ImageEditor);
       setLoading(false);
     }).catch((err) => {
