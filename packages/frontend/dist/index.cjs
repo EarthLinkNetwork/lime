@@ -273,8 +273,9 @@ function ImageEditorLazy(props) {
   }, []);
   if (loading) {
     return /* @__PURE__ */ jsxRuntime.jsx("div", { style: {
-      height: "100vh",
+      height: "100%",
       width: "100%",
+      minHeight: "400px",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -317,7 +318,7 @@ function ImageEditorLazy(props) {
       )
     ] });
   }
-  return /* @__PURE__ */ jsxRuntime.jsx(EditorComponent, { ...props });
+  return /* @__PURE__ */ jsxRuntime.jsx("div", { style: { width: "100%", height: "100%" }, children: /* @__PURE__ */ jsxRuntime.jsx(EditorComponent, { ...props }) });
 }
 function S3Uploader({
   apiEndpoint,
@@ -506,7 +507,7 @@ function S3Uploader({
     }
   }, []);
   if (isEditorOpen && previewUrl && enableEditor) {
-    return /* @__PURE__ */ jsxRuntime.jsx(
+    return /* @__PURE__ */ jsxRuntime.jsx("div", { style: { width: "100%", height: "100%", minHeight: "500px", flex: 1 }, children: /* @__PURE__ */ jsxRuntime.jsx(
       ImageEditorLazy,
       {
         src: previewUrl,
@@ -518,7 +519,7 @@ function S3Uploader({
         aspectRatioLocked: editorConfig?.aspectRatioLocked,
         defaultAspectRatio: editorConfig?.defaultAspectRatio
       }
-    );
+    ) });
   }
   if (isEditorOpen && previewUrl && enableCrop && !enableEditor) {
     return /* @__PURE__ */ jsxRuntime.jsx(

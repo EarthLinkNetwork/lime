@@ -37,8 +37,9 @@ export function ImageEditorLazy(props: ImageEditorProps) {
   if (loading) {
     return (
       <div style={{
-        height: '100vh',
+        height: '100%',
         width: '100%',
+        minHeight: '400px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -86,5 +87,9 @@ export function ImageEditorLazy(props: ImageEditorProps) {
     );
   }
 
-  return <EditorComponent {...props} />;
+  return (
+    <div style={{ width: '100%', height: '100%' }}>
+      <EditorComponent {...props} />
+    </div>
+  );
 }

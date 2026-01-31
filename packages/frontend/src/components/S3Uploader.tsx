@@ -239,16 +239,18 @@ export function S3Uploader({
   // Show full image editor if enabled (lazy loaded for Next.js compatibility)
   if (isEditorOpen && previewUrl && enableEditor) {
     return (
-      <ImageEditorLazy
-        src={previewUrl}
-        onSave={handleEditorSave}
-        onClose={handleEditorClose}
-        defaultTab={editorConfig?.defaultTab}
-        enabledTabs={editorConfig?.enabledTabs}
-        cropPresets={editorConfig?.cropPresets}
-        aspectRatioLocked={editorConfig?.aspectRatioLocked}
-        defaultAspectRatio={editorConfig?.defaultAspectRatio}
-      />
+      <div style={{ width: '100%', height: '100%', minHeight: '500px', flex: 1 }}>
+        <ImageEditorLazy
+          src={previewUrl}
+          onSave={handleEditorSave}
+          onClose={handleEditorClose}
+          defaultTab={editorConfig?.defaultTab}
+          enabledTabs={editorConfig?.enabledTabs}
+          cropPresets={editorConfig?.cropPresets}
+          aspectRatioLocked={editorConfig?.aspectRatioLocked}
+          defaultAspectRatio={editorConfig?.defaultAspectRatio}
+        />
+      </div>
     );
   }
 
