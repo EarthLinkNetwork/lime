@@ -1,7 +1,7 @@
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import FilerobotImageEditor, { TOOLS, TABS } from 'react-filerobot-image-editor';
 export { TABS, TOOLS } from 'react-filerobot-image-editor';
 import { jsx, jsxs } from 'react/jsx-runtime';
-import React, { useState, useRef, useCallback, useEffect } from 'react';
 import imageCompression from 'browser-image-compression';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -33,6 +33,15 @@ function ImageEditor({
   aspectRatioLocked = false,
   defaultAspectRatio
 }) {
+  useEffect(() => {
+    const styleId = "lime-image-editor-popper-fix";
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement("style");
+      style.id = styleId;
+      style.textContent = POPPER_FIX_STYLES;
+      document.head.appendChild(style);
+    }
+  }, []);
   const tabsIds = enabledTabs.map((tab) => {
     switch (tab) {
       case "Adjust":
@@ -115,8 +124,30 @@ function ImageEditor({
     }
   ) });
 }
+var POPPER_FIX_STYLES;
 var init_ImageEditor = __esm({
   "src/components/ImageEditor.tsx"() {
+    POPPER_FIX_STYLES = `
+#SfxPopper {
+  z-index: 999999 !important;
+}
+.FIE_crop-presets-menu {
+  z-index: 999999 !important;
+}
+#SfxPopper .SfxMenu-root {
+  pointer-events: auto !important;
+}
+#SfxPopper .SfxMenuItem-root {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+.FIE_topbar-zoom-menu {
+  z-index: 999999 !important;
+}
+.SfxModal-Wrapper {
+  z-index: 999998 !important;
+}
+`;
   }
 });
 var DEFAULT_OPTIONS = {

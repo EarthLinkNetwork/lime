@@ -1,5 +1,29 @@
+import { useEffect } from 'react';
 import FilerobotImageEditor, { TABS, TOOLS } from 'react-filerobot-image-editor';
 import type { ImageEditorProps } from '../types';
+
+// CSS to fix z-index issues with dropdowns in modal contexts
+const POPPER_FIX_STYLES = `
+#SfxPopper {
+  z-index: 999999 !important;
+}
+.FIE_crop-presets-menu {
+  z-index: 999999 !important;
+}
+#SfxPopper .SfxMenu-root {
+  pointer-events: auto !important;
+}
+#SfxPopper .SfxMenuItem-root {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+.FIE_topbar-zoom-menu {
+  z-index: 999999 !important;
+}
+.SfxModal-Wrapper {
+  z-index: 999998 !important;
+}
+`;
 
 export function ImageEditor({
   src,
@@ -11,6 +35,18 @@ export function ImageEditor({
   aspectRatioLocked = false,
   defaultAspectRatio,
 }: ImageEditorProps) {
+  // Inject CSS to fix z-index issues with Popper dropdowns
+  useEffect(() => {
+    const styleId = 'lime-image-editor-popper-fix';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = POPPER_FIX_STYLES;
+      document.head.appendChild(style);
+    }
+    // Don't remove on unmount - other instances might still need it
+  }, []);
+
   // Map string tab names to TABS enum
   const tabsIds = enabledTabs.map((tab) => {
     switch (tab) {
