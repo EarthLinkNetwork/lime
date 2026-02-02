@@ -2,8 +2,9 @@ import { useEffect } from 'react';
 import FilerobotImageEditor, { TABS, TOOLS } from 'react-filerobot-image-editor';
 import type { ImageEditorProps } from '../types';
 
-// CSS to fix z-index issues with dropdowns in modal contexts
-const POPPER_FIX_STYLES = `
+// CSS to fix z-index issues and layout for react-filerobot-image-editor
+const LIME_EDITOR_STYLES = `
+/* Z-index fixes for dropdowns in modal contexts */
 #SfxPopper {
   z-index: 999999 !important;
 }
@@ -23,6 +24,33 @@ const POPPER_FIX_STYLES = `
 .SfxModal-Wrapper {
   z-index: 999998 !important;
 }
+
+/* Layout fixes for ImageEditor */
+.lime-image-editor-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.lime-image-editor-wrapper .FIE_root {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Ensure the editor fills the container properly */
+.lime-image-editor-wrapper > div {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
 `;
 
 export function ImageEditor({
@@ -35,13 +63,13 @@ export function ImageEditor({
   aspectRatioLocked = false,
   defaultAspectRatio,
 }: ImageEditorProps) {
-  // Inject CSS to fix z-index issues with Popper dropdowns
+  // Inject CSS to fix z-index issues and layout
   useEffect(() => {
-    const styleId = 'lime-image-editor-popper-fix';
+    const styleId = 'lime-image-editor-styles';
     if (!document.getElementById(styleId)) {
       const style = document.createElement('style');
       style.id = styleId;
-      style.textContent = POPPER_FIX_STYLES;
+      style.textContent = LIME_EDITOR_STYLES;
       document.head.appendChild(style);
     }
     // Don't remove on unmount - other instances might still need it
@@ -121,7 +149,7 @@ export function ImageEditor({
   }
 
   return (
-    <div style={{ height: '100%', width: '100%' }}>
+    <div className="lime-image-editor-wrapper">
       <FilerobotImageEditor
         source={src}
         onSave={handleSave}

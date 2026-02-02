@@ -42,11 +42,11 @@ function ImageEditor({
   defaultAspectRatio
 }) {
   React.useEffect(() => {
-    const styleId = "lime-image-editor-popper-fix";
+    const styleId = "lime-image-editor-styles";
     if (!document.getElementById(styleId)) {
       const style = document.createElement("style");
       style.id = styleId;
-      style.textContent = POPPER_FIX_STYLES;
+      style.textContent = LIME_EDITOR_STYLES;
       document.head.appendChild(style);
     }
   }, []);
@@ -113,7 +113,7 @@ function ImageEditor({
       height: preset.height
     }));
   }
-  return /* @__PURE__ */ jsxRuntime.jsx("div", { style: { height: "100%", width: "100%" }, children: /* @__PURE__ */ jsxRuntime.jsx(
+  return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "lime-image-editor-wrapper", children: /* @__PURE__ */ jsxRuntime.jsx(
     FilerobotImageEditor__default.default,
     {
       source: src,
@@ -132,10 +132,11 @@ function ImageEditor({
     }
   ) });
 }
-var POPPER_FIX_STYLES;
+var LIME_EDITOR_STYLES;
 var init_ImageEditor = __esm({
   "src/components/ImageEditor.tsx"() {
-    POPPER_FIX_STYLES = `
+    LIME_EDITOR_STYLES = `
+/* Z-index fixes for dropdowns in modal contexts */
 #SfxPopper {
   z-index: 999999 !important;
 }
@@ -154,6 +155,33 @@ var init_ImageEditor = __esm({
 }
 .SfxModal-Wrapper {
   z-index: 999998 !important;
+}
+
+/* Layout fixes for ImageEditor */
+.lime-image-editor-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.lime-image-editor-wrapper .FIE_root {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Ensure the editor fills the container properly */
+.lime-image-editor-wrapper > div {
+  flex: 1;
+  display: flex;
+  min-height: 0;
 }
 `;
   }
@@ -351,6 +379,141 @@ function ImageEditorLazy(props) {
   }
   return /* @__PURE__ */ jsxRuntime.jsx("div", { style: { width: "100%", height: "100%" }, children: /* @__PURE__ */ jsxRuntime.jsx(EditorComponent, { ...props }) });
 }
+var S3_UPLOADER_STYLES = `
+.s3-uploader {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.s3-uploader__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.s3-uploader__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.s3-uploader__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.s3-uploader__button--upload {
+  background-color: #2196F3;
+  color: white;
+}
+
+.s3-uploader__button--upload:hover:not(:disabled) {
+  background-color: #1976D2;
+}
+
+.s3-uploader__button--upload:active:not(:disabled) {
+  background-color: #1565C0;
+}
+
+.s3-uploader__button--reset {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.s3-uploader__button--reset:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+.s3-uploader__button--reset:active:not(:disabled) {
+  background-color: #d5d5d5;
+}
+
+.s3-uploader__preview {
+  margin-top: 16px;
+  padding: 8px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.s3-uploader__preview-image {
+  display: block;
+  border-radius: 4px;
+}
+
+.s3-uploader__error {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #ffebee;
+  color: #c62828;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.s3-uploader__success {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.s3-uploader__progress {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.s3-uploader__progress-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  appearance: none;
+  background-color: #e0e0e0;
+}
+
+.s3-uploader__progress-bar::-webkit-progress-bar {
+  background-color: #e0e0e0;
+  border-radius: 4px;
+}
+
+.s3-uploader__progress-bar::-webkit-progress-value {
+  background-color: #2196F3;
+  border-radius: 4px;
+}
+
+.s3-uploader__progress-bar::-moz-progress-bar {
+  background-color: #2196F3;
+  border-radius: 4px;
+}
+
+.s3-uploader__progress-text {
+  font-size: 14px;
+  color: #666;
+  min-width: 40px;
+}
+
+.s3-uploader__input-container {
+  margin-bottom: 12px;
+}
+
+.s3-uploader__label {
+  font-size: 14px;
+  color: #666;
+  margin-right: 8px;
+}
+`;
 function S3Uploader({
   apiEndpoint,
   apiKey,
@@ -380,6 +543,15 @@ function S3Uploader({
   const [isEditorOpen, setIsEditorOpen] = React.useState(false);
   const [isDragOver, setIsDragOver] = React.useState(false);
   const fileInputRef = React.useRef(null);
+  React.useEffect(() => {
+    const styleId = "lime-s3-uploader-styles";
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement("style");
+      style.id = styleId;
+      style.textContent = S3_UPLOADER_STYLES;
+      document.head.appendChild(style);
+    }
+  }, []);
   const processFile = React.useCallback(
     (file) => {
       if (!allowedFileTypes.includes(file.type)) {

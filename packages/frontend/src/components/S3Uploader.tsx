@@ -1,8 +1,145 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { compressImage } from '../utils/imageCompression';
 import { ImageCropper } from './ImageCropper';
 import { ImageEditorLazy } from './ImageEditorLazy';
 import type { S3UploaderProps, PresignedUrlResponse } from '../types';
+
+// CSS styles for S3Uploader component
+const S3_UPLOADER_STYLES = `
+.s3-uploader {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.s3-uploader__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.s3-uploader__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.s3-uploader__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.s3-uploader__button--upload {
+  background-color: #2196F3;
+  color: white;
+}
+
+.s3-uploader__button--upload:hover:not(:disabled) {
+  background-color: #1976D2;
+}
+
+.s3-uploader__button--upload:active:not(:disabled) {
+  background-color: #1565C0;
+}
+
+.s3-uploader__button--reset {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.s3-uploader__button--reset:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+.s3-uploader__button--reset:active:not(:disabled) {
+  background-color: #d5d5d5;
+}
+
+.s3-uploader__preview {
+  margin-top: 16px;
+  padding: 8px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.s3-uploader__preview-image {
+  display: block;
+  border-radius: 4px;
+}
+
+.s3-uploader__error {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #ffebee;
+  color: #c62828;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.s3-uploader__success {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.s3-uploader__progress {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.s3-uploader__progress-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  appearance: none;
+  background-color: #e0e0e0;
+}
+
+.s3-uploader__progress-bar::-webkit-progress-bar {
+  background-color: #e0e0e0;
+  border-radius: 4px;
+}
+
+.s3-uploader__progress-bar::-webkit-progress-value {
+  background-color: #2196F3;
+  border-radius: 4px;
+}
+
+.s3-uploader__progress-bar::-moz-progress-bar {
+  background-color: #2196F3;
+  border-radius: 4px;
+}
+
+.s3-uploader__progress-text {
+  font-size: 14px;
+  color: #666;
+  min-width: 40px;
+}
+
+.s3-uploader__input-container {
+  margin-bottom: 12px;
+}
+
+.s3-uploader__label {
+  font-size: 14px;
+  color: #666;
+  margin-right: 8px;
+}
+`;
 
 type UploadStatus = 'idle' | 'compressing' | 'editing' | 'uploading' | 'success' | 'error';
 
@@ -37,6 +174,17 @@ export function S3Uploader({
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Inject CSS styles for S3Uploader
+  useEffect(() => {
+    const styleId = 'lime-s3-uploader-styles';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = S3_UPLOADER_STYLES;
+      document.head.appendChild(style);
+    }
+  }, []);
 
   const processFile = useCallback(
     (file: File) => {
