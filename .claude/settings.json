@@ -1,0 +1,14 @@
+{
+  "extraKnownMarketplaces": {
+    "eln-claude-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "EarthLinkNetwork/claude-plugins"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "eln-quality-workflow@eln-claude-plugins": true,
+    "eln-pm-orchestrator@eln-claude-plugins": true
+  }
+}
